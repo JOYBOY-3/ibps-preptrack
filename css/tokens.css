@@ -1,0 +1,146 @@
+/* ============================================================================
+   Design tokens — every colour, size and space decision lives here.
+   No component file hardcodes a colour.
+   ========================================================================== */
+
+:root {
+  /* neutrals — biased toward the accent hue, not pure grey */
+  --paper:        #f4f6f7;
+  --surface:      #ffffff;
+  --surface-2:    #eef2f4;
+  --ink:          #16232c;
+  --ink-2:        #3a4b56;
+  --muted:        #5c6b75;
+  --rule:         #dde3e7;
+  --rule-strong:  #c3ced5;
+
+  /* accent — ledger teal */
+  --accent:       #1a5b6e;
+  --accent-hover: #14495a;
+  --accent-soft:  #e0edf1;
+  --accent-ink:   #ffffff;
+
+  /* semantic — deliberately separate from the accent */
+  --good:         #2f7a45;
+  --good-soft:    #e2f0e6;
+  --warn:         #8a5210;
+  --warn-soft:    #f9efdf;
+  --danger:       #a33a3a;
+  --danger-soft:  #f7e5e5;
+
+  /* subject keys — a real information channel, consistent across every view */
+  --reasoning:      #1a5b6e;
+  --reasoning-soft: #e0edf1;
+  --quant:          #6b4a86;
+  --quant-soft:     #eee7f3;
+  --english:        #2f7a45;
+  --english-soft:   #e2f0e6;
+  --ga:             #8a5210;
+  --ga-soft:        #f9efdf;
+  --neutral-key:    #5c6b75;
+  --neutral-soft:   #eaeef0;
+
+  /* type */
+  --font-ui:  system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-num: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+
+  --step--1: clamp(0.78rem, 0.76rem + 0.10vw, 0.83rem);
+  --step-0:  clamp(0.94rem, 0.90rem + 0.18vw, 1.00rem);
+  --step-1:  clamp(1.06rem, 1.00rem + 0.30vw, 1.19rem);
+  --step-2:  clamp(1.25rem, 1.14rem + 0.55vw, 1.50rem);
+  --step-3:  clamp(1.50rem, 1.30rem + 1.00vw, 2.00rem);
+  --step-4:  clamp(1.90rem, 1.55rem + 1.75vw, 2.75rem);
+
+  /* spacing — 4px base */
+  --sp-1: 0.25rem;  --sp-2: 0.5rem;   --sp-3: 0.75rem;  --sp-4: 1rem;
+  --sp-5: 1.5rem;   --sp-6: 2rem;     --sp-7: 3rem;     --sp-8: 4rem;
+
+  --radius:    10px;
+  --radius-sm: 6px;
+  --radius-lg: 16px;
+
+  --shadow-1: 0 1px 2px rgb(22 35 44 / 6%), 0 1px 3px rgb(22 35 44 / 4%);
+  --shadow-2: 0 2px 4px rgb(22 35 44 / 6%), 0 8px 20px rgb(22 35 44 / 7%);
+
+  --nav-height: 60px;
+  --content-max: 1120px;
+
+  --focus-ring: 2px solid var(--accent);
+  --focus-offset: 2px;
+}
+
+/* ---------------------------------------------------------------- dark theme
+   Tokens are redefined; components are never styled inside the media query. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper:        #0f161b;
+    --surface:      #161f26;
+    --surface-2:    #1d2830;
+    --ink:          #e6ecf0;
+    --ink-2:        #b9c6ce;
+    --muted:        #90a1ab;
+    --rule:         #26333c;
+    --rule-strong:  #384852;
+
+    --accent:       #5fb3c9;
+    --accent-hover: #7cc4d7;
+    --accent-soft:  #14313b;
+    --accent-ink:   #0f161b;
+
+    --good:         #6cc088;
+    --good-soft:    #16301f;
+    --warn:         #d9a45b;
+    --warn-soft:    #33260f;
+    --danger:       #e08585;
+    --danger-soft:  #351b1b;
+
+    --reasoning:      #5fb3c9;
+    --reasoning-soft: #14313b;
+    --quant:          #b394d0;
+    --quant-soft:     #291f33;
+    --english:        #6cc088;
+    --english-soft:   #16301f;
+    --ga:             #d9a45b;
+    --ga-soft:        #33260f;
+    --neutral-key:    #90a1ab;
+    --neutral-soft:   #202b33;
+
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 30%);
+    --shadow-2: 0 2px 4px rgb(0 0 0 / 30%), 0 8px 20px rgb(0 0 0 / 25%);
+  }
+}
+
+/* Manual toggle must beat the media query in BOTH directions. */
+:root[data-theme='dark'] {
+  --paper: #0f161b;  --surface: #161f26;  --surface-2: #1d2830;
+  --ink: #e6ecf0;    --ink-2: #b9c6ce;    --muted: #90a1ab;
+  --rule: #26333c;   --rule-strong: #384852;
+  --accent: #5fb3c9; --accent-hover: #7cc4d7; --accent-soft: #14313b; --accent-ink: #0f161b;
+  --good: #6cc088;   --good-soft: #16301f;
+  --warn: #d9a45b;   --warn-soft: #33260f;
+  --danger: #e08585; --danger-soft: #351b1b;
+  --reasoning: #5fb3c9; --reasoning-soft: #14313b;
+  --quant: #b394d0;     --quant-soft: #291f33;
+  --english: #6cc088;   --english-soft: #16301f;
+  --ga: #d9a45b;        --ga-soft: #33260f;
+  --neutral-key: #90a1ab; --neutral-soft: #202b33;
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 30%);
+  --shadow-2: 0 2px 4px rgb(0 0 0 / 30%), 0 8px 20px rgb(0 0 0 / 25%);
+}
+
+:root[data-theme='light'] {
+  --paper: #f4f6f7;  --surface: #ffffff;  --surface-2: #eef2f4;
+  --ink: #16232c;    --ink-2: #3a4b56;    --muted: #5c6b75;
+  --rule: #dde3e7;   --rule-strong: #c3ced5;
+  --accent: #1a5b6e; --accent-hover: #14495a; --accent-soft: #e0edf1; --accent-ink: #ffffff;
+  --good: #2f7a45;   --good-soft: #e2f0e6;
+  --warn: #8a5210;   --warn-soft: #f9efdf;
+  --danger: #a33a3a; --danger-soft: #f7e5e5;
+  --reasoning: #1a5b6e; --reasoning-soft: #e0edf1;
+  --quant: #6b4a86;     --quant-soft: #eee7f3;
+  --english: #2f7a45;   --english-soft: #e2f0e6;
+  --ga: #8a5210;        --ga-soft: #f9efdf;
+  --neutral-key: #5c6b75; --neutral-soft: #eaeef0;
+  --shadow-1: 0 1px 2px rgb(22 35 44 / 6%), 0 1px 3px rgb(22 35 44 / 4%);
+  --shadow-2: 0 2px 4px rgb(22 35 44 / 6%), 0 8px 20px rgb(22 35 44 / 7%);
+}

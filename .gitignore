@@ -1,0 +1,13 @@
+# OS
+.DS_Store
+Thumbs.db
+*~
+.~lock.*
+
+# Editors
+.vscode/
+.idea/
+
+# Local scratch
+node_modules/
+*.log
