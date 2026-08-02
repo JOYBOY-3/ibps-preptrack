@@ -18,23 +18,62 @@ import { SYNC_FILENAME } from '../config.js';
 const DRIVE = 'https://www.googleapis.com/drive/v3';
 const UPLOAD = 'https://www.googleapis.com/upload/drive/v3';
 
+/**
+ * Drive returns 403 for several completely unrelated problems, so the `reason`
+ * field must be read rather than assumed. Reporting "rate limited" when the real
+ * cause is a disabled API sends you debugging in exactly the wrong direction.
+ */
+const REASON_MESSAGE = {
+  accessNotConfigured:
+    'The Google Drive API is not enabled for this project. Enable it in Google Cloud Console → APIs & Services → Library → Google Drive API.',
+  SERVICE_DISABLED:
+    'The Google Drive API is not enabled for this project. Enable it in Google Cloud Console → APIs & Services → Library → Google Drive API.',
+  insufficientPermissions:
+    'This app was not granted the drive.appdata permission. Sign out and sign in again, and accept the Drive permission.',
+  forbidden:
+    'Google refused the request. Check that the drive.appdata scope is listed under Data Access.',
+  rateLimitExceeded: 'Google is rate-limiting requests. It will retry shortly.',
+  userRateLimitExceeded: 'Google is rate-limiting requests. It will retry shortly.',
+  dailyLimitExceeded: 'The daily Drive API quota for this project is exhausted.',
+  storageQuotaExceeded: 'Your Google Drive is full, so PrepTrack cannot save.',
+  appNotAuthorizedToFile: 'PrepTrack cannot access that file — it was created by a different app.'
+};
+
+const RETRYABLE = new Set(['rateLimitExceeded', 'userRateLimitExceeded', 'backendError', 'internalError']);
+
 async function drive(token, url, opts = {}) {
   const res = await fetch(String(url), {
     ...opts,
     headers: { Authorization: `Bearer ${token}`, ...(opts.headers || {}) }
   });
 
+  if (res.ok) return res;
+
   if (res.status === 401) {
     throw Object.assign(new Error('token_expired'), { status: 401, retryable: true });
   }
-  if (res.status === 403 || res.status === 429) {
-    throw Object.assign(new Error('rate_limited'), { status: res.status, retryable: true });
+
+  // Read the real reason out of the body before deciding what happened.
+  let reason = null;
+  let detail = '';
+  try {
+    const body = await res.json();
+    const first = body?.error?.errors?.[0];
+    reason = first?.reason || body?.error?.status || null;
+    detail = first?.message || body?.error?.message || '';
+  } catch {
+    detail = await res.text().catch(() => '');
   }
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw Object.assign(new Error(`drive_${res.status}`), { status: res.status, body });
-  }
-  return res;
+
+  const err = new Error(reason || `drive_${res.status}`);
+  err.status = res.status;
+  err.reason = reason;
+  err.detail = detail;
+  err.userMessage = REASON_MESSAGE[reason] || `Drive request failed (HTTP ${res.status}). ${detail}`.trim();
+  err.retryable = RETRYABLE.has(reason) || res.status === 429 || res.status >= 500;
+
+  console.error('[preptrack] Drive error', { status: res.status, reason, detail });
+  throw err;
 }
 
 /** Returns { id, modifiedTime, size } or null when no state file exists yet. */

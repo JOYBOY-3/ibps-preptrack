@@ -1,0 +1,34 @@
+/* ============================================================================
+   Self-hosted typography.
+   Bundled rather than loaded from a CDN so the app keeps its exact look with no
+   network — a study tool that falls back to Arial on a train is not premium.
+   Latin subset only: 60 KB for the whole type system.
+   ========================================================================== */
+
+/* Manrope — variable 200–800. Geometric, generous counters, excellent at small
+   sizes, and its numerals are clean enough to carry the data-heavy screens. */
+@font-face {
+  font-family: 'Manrope';
+  src: url('../assets/fonts/manrope-var.woff2') format('woff2-variations'),
+       url('../assets/fonts/manrope-var.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* IBM Plex Mono — for day numbers, durations, scores and stats. Genuinely
+   tabular, and its slightly technical tone suits an exam ledger. */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../assets/fonts/plexmono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../assets/fonts/plexmono-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}

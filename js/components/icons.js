@@ -5,6 +5,7 @@ const svg = (paths, viewBox = '0 0 24 24') =>
         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
 
 export const ICONS = {
+  menu:     svg('<path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17"/>'),
   today:    svg('<rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3 9.5h18"/><path d="M8.5 14.5l2.2 2.2 4.3-4.4"/>'),
   week:     svg('<rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M9 9.5v11M15 9.5v11"/>'),
   plan:     svg('<path d="M4 5.5h16M4 12h16M4 18.5h10"/><circle cx="19" cy="18.5" r="2"/>'),
@@ -25,9 +26,19 @@ export const ICONS = {
   flame:    svg('<path d="M12 3s5 4.2 5 9a5 5 0 0 1-10 0c0-1.6.7-3 1.5-4 .2 1.2 1 2 2 2 1.6 0 2.5-2.4 1.5-7z"/>')
 };
 
+/**
+ * Build an icon element.
+ *
+ * The class must be applied to the SVG we return, not to the temporary wrapper —
+ * putting it on the wrapper silently discards it, leaving a viewBox-only SVG with
+ * no intrinsic size, which then expands to fill whatever contains it.
+ */
 export function icon(name, className = '') {
-  const span = document.createElement('span');
-  span.className = className;
-  span.innerHTML = ICONS[name] || ICONS.circle;
-  return span.firstElementChild;
+  const wrap = document.createElement('span');
+  wrap.innerHTML = ICONS[name] || ICONS.circle;
+  const svg = wrap.firstElementChild;
+  svg.classList.add('icon');
+  if (className) svg.classList.add(...className.split(/\s+/).filter(Boolean));
+  svg.setAttribute('focusable', 'false');
+  return svg;
 }

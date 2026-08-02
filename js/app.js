@@ -15,33 +15,18 @@ import { todayView, setViewedDay } from './views/today.js';
 import { planView } from './views/plan.js';
 import { progressView } from './views/progress.js';
 import { settingsView } from './views/settings.js';
+import { weekView } from './views/week.js';
 import { gateView } from './views/gate.js';
 import { hasSignedInBefore, initAuth } from './sync/googleAuth.js';
-import { initSyncListeners, markDirty, syncOnGesture, isConnected } from './sync/syncEngine.js';
+import { initSyncListeners, markDirty, syncOnGesture, isConnected, onSyncStatus } from './sync/syncEngine.js';
 
 const ROUTES = [
   { id: 'today',    path: '#/today',    label: 'Today',    icon: 'today',    render: todayView },
-  { id: 'week',     path: '#/week',     label: 'Week',     icon: 'week',     render: weekPlaceholder },
+  { id: 'week',     path: '#/week',     label: 'Week',     icon: 'week',     render: weekView },
   { id: 'plan',     path: '#/plan',     label: 'Plan',     icon: 'plan',     render: planView },
   { id: 'progress', path: '#/progress', label: 'Progress', icon: 'progress', render: progressView },
   { id: 'settings', path: '#/settings', label: 'Settings', icon: 'settings', render: settingsView }
 ];
-
-function weekPlaceholder() {
-  return el('div.view', {}, [
-    el('div.section-head', {}, [el('h1', { text: 'Week' })]),
-    el('div.placeholder', {}, [
-      icon('week'),
-      el('div', {}, [
-        el('strong', { text: 'The week table arrives in M2.' }),
-        el('div.muted', { style: 'margin-top:4px',
-          text: 'Seven days across four subjects — a table on desktop, stacked cards on phones. ' +
-                'Use Plan in the meantime; every day is already there.' })
-      ]),
-      el('a.btn.btn--primary', { href: '#/plan' }, ['Open the full plan'])
-    ])
-  ]);
-}
 
 // ---------------------------------------------------------------- router
 function parseHash() {
@@ -55,8 +40,29 @@ function renderNav(activeId) {
   return el('nav.app-nav', { 'aria-label': 'Main' },
     ROUTES.map(r => el('a.nav-item', {
       href: r.path,
+      title: r.label,
       'aria-current': r.id === activeId ? 'page' : null
-    }, [icon(r.icon), el('span', { text: r.label })])));
+    }, [icon(r.icon), el('span.nav-label', { text: r.label })])));
+}
+
+/* Sidebar collapse. Desktop only — phones keep the bottom bar. The choice is
+   remembered, because a layout preference that resets every launch is noise. */
+const NAV_KEY = 'preptrack.navMode';
+
+function applyNavMode(mode) {
+  const app = document.querySelector('.app');
+  if (app) app.dataset.nav = mode;
+  const btn = document.querySelector('.nav-toggle');
+  if (btn) {
+    btn.setAttribute('aria-expanded', mode === 'full' ? 'true' : 'false');
+    btn.setAttribute('aria-label', mode === 'full' ? 'Collapse sidebar' : 'Expand sidebar');
+  }
+}
+
+function toggleNavMode() {
+  const next = (localStorage.getItem(NAV_KEY) || 'full') === 'full' ? 'mini' : 'full';
+  localStorage.setItem(NAV_KEY, next);
+  applyNavMode(next);
 }
 
 let currentRouteId = null;
@@ -66,10 +72,11 @@ function render() {
   currentRouteId = route.id;
 
   if (route.id === 'today') setViewedDay(param && param >= 1 && param <= 147 ? param : null);
+  const renderArgs = route.id === 'week' ? [param] : [];
 
   const main = $('#main');
   const scrollTop = main.scrollTop;
-  mount(main, route.render());
+  mount(main, route.render(...renderArgs));
 
   // Refresh nav highlighting
   const nav = $('.app-nav');
@@ -110,14 +117,22 @@ function bootApp() {
   const state = getState();
   const app = el('div.app', {}, [
     el('header.app-header', {}, [
-      el('a.app-brand', { href: '#/today', style: 'text-decoration:none;color:inherit' }, [
+      el('button.nav-toggle', {
+        type: 'button',
+        'aria-controls': 'app-nav',
+        'aria-expanded': 'true',
+        'aria-label': 'Collapse sidebar',
+        onclick: toggleNavMode
+      }, [icon('menu')]),
+      el('a.app-brand', { href: '#/today' }, [
         el('span.app-brand__mark', { text: 'PT' }),
         el('span', {}, [
-          'PrepTrack',
-          el('span.app-brand__sub', { text: '  IBPS Clerk 2026' })
+          el('span', { text: 'PrepTrack' }),
+          el('span.app-brand__sub', { text: 'IBPS Clerk 2026' })
         ])
       ]),
       el('div.header-actions', {}, [
+        el('span#sync-pip.sync-pip', { title: 'Sync status', 'aria-hidden': 'true' }),
         el('a.icon-btn', { href: '#/settings', 'aria-label': 'Settings' }, [icon('settings')])
       ])
     ]),
@@ -127,6 +142,16 @@ function bootApp() {
 
   document.body.prepend(el('a.skip-link', { href: '#main', text: 'Skip to content' }));
   document.body.append(app);
+
+  applyNavMode(localStorage.getItem(NAV_KEY) || 'full');
+
+  // Live sync indicator in the header — quiet, always visible, never a popup.
+  onSyncStatus(s => {
+    const pip = $('#sync-pip');
+    if (!pip) return;
+    pip.dataset.state = s.state;
+    pip.title = s.message || s.state;
+  });
 
   render();
   window.addEventListener('hashchange', render);

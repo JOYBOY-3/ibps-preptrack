@@ -138,11 +138,13 @@ export async function sync({ interactive = false } = {}) {
       const msg = String(err?.message || err);
       if (msg === 'token_expired' || msg === 'popup_closed' || msg === 'popup_failed_to_open') {
         setStatus('pending', 'Sync needs you to reconnect. Open Settings and tap Sync now.', msg);
-      } else if (msg === 'rate_limited') {
-        setStatus('pending', 'Google is rate-limiting. Will retry shortly.', msg);
+      } else if (err?.retryable) {
+        setStatus('pending', err.userMessage || 'Temporary Google error. Will retry shortly.', msg);
       } else {
         console.error('[preptrack] sync failed', err);
-        setStatus('error', 'Sync failed. Your data is safe on this device.', msg);
+        // Surface the ACTUAL reason — a vague message costs hours of wrong debugging.
+        setStatus('error',
+          err?.userMessage || 'Sync failed. Your data is safe on this device.', msg);
       }
       return null;
     } finally {
@@ -171,24 +173,75 @@ export function disconnectSync() {
   setStatus('disconnected', 'Disconnected from Google Drive.');
 }
 
-/** Opportunistic hook — safe to call from any user gesture. Never opens a popup. */
+/**
+ * Opportunistic hook — safe from any user gesture.
+ *
+ * A gesture is also the ONLY moment a fresh token can be minted, because the GIS
+ * popup requires transient user activation. So if the token has lapsed, we quietly
+ * renew it here: the user taps a block complete, and that same tap silently mints a
+ * token and pushes the change. In practice this makes sync feel fully automatic.
+ */
 export function syncOnGesture() {
-  if (!dirty || !isConnected() || !navigator.onLine) return;
-  if (hasFreshToken()) sync({ interactive: false });
+  if (!isConnected() || !navigator.onLine) return;
+
+  if (hasFreshToken()) {
+    if (dirty) sync({ interactive: false });
+    return;
+  }
+  // Token lapsed and there is work to push — renew inside this gesture.
+  if (dirty && Date.now() - lastInteractiveAttempt > 30_000) {
+    lastInteractiveAttempt = Date.now();
+    sync({ interactive: true }).catch(() => { /* status already set */ });
+  }
+}
+
+let lastInteractiveAttempt = 0;
+let autoTimer = null;
+
+/**
+ * Background auto-sync. Runs on a timer while the token is still valid, so for the
+ * hour after any sign-in the app syncs entirely on its own with no interaction.
+ * It never opens a popup from here — that would be blocked, and would be rude.
+ */
+const AUTO_SYNC_INTERVAL_MS = 60_000;
+
+function startAutoSync() {
+  clearInterval(autoTimer);
+  autoTimer = setInterval(() => {
+    if (!isConnected() || !navigator.onLine) return;
+    if (document.visibilityState !== 'visible') return;
+    if (!dirty) return;
+    if (!hasFreshToken()) return;       // wait for a gesture to renew
+    sync({ interactive: false });
+  }, AUTO_SYNC_INTERVAL_MS);
 }
 
 export function initSyncListeners() {
+  startAutoSync();
+
   window.addEventListener('online', () => {
+    if (!isConnected()) return;
     if (dirty && hasFreshToken()) sync({ interactive: false });
-    else if (isConnected()) setStatus('pending', 'Back online — tap anything to sync.');
+    else setStatus('pending', 'Back online — syncing shortly.');
   });
+
   window.addEventListener('offline', () => {
     if (isConnected()) setStatus('offline', 'Offline — changes are saved on this device.');
   });
-  // Last chance to flush before the tab goes away.
+
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden' && dirty && hasFreshToken()) {
+    if (!isConnected()) return;
+    if (document.visibilityState === 'visible') {
+      // Returning to the tab: pull anything another device pushed.
+      if (hasFreshToken()) sync({ interactive: false });
+    } else if (dirty && hasFreshToken()) {
+      // Last chance to flush before the tab is backgrounded or closed.
       sync({ interactive: false });
     }
   });
+
+  // Pull once on load so a device that has been closed catches up immediately.
+  setTimeout(() => {
+    if (isConnected() && navigator.onLine && hasFreshToken()) sync({ interactive: false });
+  }, 2500);
 }

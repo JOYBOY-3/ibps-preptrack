@@ -1,146 +1,176 @@
 /* ============================================================================
    Design tokens — every colour, size and space decision lives here.
    No component file hardcodes a colour.
+
+   Palette logic: a single deep-teal accent against neutrals that are biased
+   toward it, so nothing reads as an unconsidered grey. Light mode is a cool
+   paper, not pure white. Dark mode is a deep blue-black, not pure black —
+   pure black crushes shadow and makes elevation impossible to read.
    ========================================================================== */
 
 :root {
-  /* neutrals — biased toward the accent hue, not pure grey */
-  --paper:        #f4f6f7;
-  --surface:      #ffffff;
-  --surface-2:    #eef2f4;
-  --ink:          #16232c;
-  --ink-2:        #3a4b56;
-  --muted:        #5c6b75;
-  --rule:         #dde3e7;
-  --rule-strong:  #c3ced5;
+  color-scheme: light dark;
 
-  /* accent — ledger teal */
-  --accent:       #1a5b6e;
-  --accent-hover: #14495a;
-  --accent-soft:  #e0edf1;
+  /* ---- neutrals, light ---- */
+  --bg:          #f7f9fa;
+  --surface:     #ffffff;
+  --surface-2:   #eff4f6;
+  --surface-3:   #e5ecef;
+  --ink:         #0d1a21;
+  --ink-2:       #34474f;
+  --muted:       #647882;
+  --rule:        #e2eaee;
+  --rule-strong: #c8d5db;
+
+  /* ---- accent ---- */
+  --accent:       #0f6e80;
+  --accent-hover: #0b5766;
+  --accent-soft:  #e2f0f3;
+  --accent-line:  #9fcdd6;
   --accent-ink:   #ffffff;
 
-  /* semantic — deliberately separate from the accent */
-  --good:         #2f7a45;
-  --good-soft:    #e2f0e6;
-  --warn:         #8a5210;
-  --warn-soft:    #f9efdf;
-  --danger:       #a33a3a;
-  --danger-soft:  #f7e5e5;
+  /* ---- semantic, deliberately separate from the accent ---- */
+  --good:        #257a49;
+  --good-soft:   #e2f1e8;
+  --warn:        #8a5210;
+  --warn-soft:   #f9efdf;
+  --danger:      #a83232;
+  --danger-soft: #f9e7e7;
 
-  /* subject keys — a real information channel, consistent across every view */
-  --reasoning:      #1a5b6e;
-  --reasoning-soft: #e0edf1;
-  --quant:          #6b4a86;
-  --quant-soft:     #eee7f3;
-  --english:        #2f7a45;
-  --english-soft:   #e2f0e6;
+  /* ---- subject keys: a real information channel, identical in every view ---- */
+  --reasoning:      #0f6e80;
+  --reasoning-soft: #e2f0f3;
+  --quant:          #6a4a92;
+  --quant-soft:     #eee9f5;
+  --english:        #257a49;
+  --english-soft:   #e2f1e8;
   --ga:             #8a5210;
   --ga-soft:        #f9efdf;
-  --neutral-key:    #5c6b75;
-  --neutral-soft:   #eaeef0;
+  --neutral-key:    #647882;
+  --neutral-soft:   #eaeff1;
 
-  /* type */
-  --font-ui:  system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-num: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+  /* ---- type ---- */
+  --font-ui:  'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-num: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
-  --step--1: clamp(0.78rem, 0.76rem + 0.10vw, 0.83rem);
-  --step-0:  clamp(0.94rem, 0.90rem + 0.18vw, 1.00rem);
-  --step-1:  clamp(1.06rem, 1.00rem + 0.30vw, 1.19rem);
-  --step-2:  clamp(1.25rem, 1.14rem + 0.55vw, 1.50rem);
-  --step-3:  clamp(1.50rem, 1.30rem + 1.00vw, 2.00rem);
-  --step-4:  clamp(1.90rem, 1.55rem + 1.75vw, 2.75rem);
+  --step--2: clamp(0.69rem, 0.67rem + 0.08vw, 0.73rem);
+  --step--1: clamp(0.78rem, 0.76rem + 0.10vw, 0.84rem);
+  --step-0:  clamp(0.91rem, 0.88rem + 0.16vw, 0.98rem);
+  --step-1:  clamp(1.05rem, 1.00rem + 0.28vw, 1.19rem);
+  --step-2:  clamp(1.26rem, 1.15rem + 0.55vw, 1.52rem);
+  --step-3:  clamp(1.55rem, 1.33rem + 1.05vw, 2.10rem);
+  --step-4:  clamp(2.00rem, 1.62rem + 1.90vw, 3.00rem);
 
-  /* spacing — 4px base */
-  --sp-1: 0.25rem;  --sp-2: 0.5rem;   --sp-3: 0.75rem;  --sp-4: 1rem;
-  --sp-5: 1.5rem;   --sp-6: 2rem;     --sp-7: 3rem;     --sp-8: 4rem;
+  --tracking-tight: -0.021em;
+  --tracking-snug:  -0.011em;
+  --tracking-wide:   0.075em;
 
-  --radius:    10px;
-  --radius-sm: 6px;
-  --radius-lg: 16px;
+  /* ---- space, 4px base ---- */
+  --sp-1: 0.25rem; --sp-2: 0.5rem;  --sp-3: 0.75rem; --sp-4: 1rem;
+  --sp-5: 1.5rem;  --sp-6: 2rem;    --sp-7: 3rem;    --sp-8: 4rem;
 
-  --shadow-1: 0 1px 2px rgb(22 35 44 / 6%), 0 1px 3px rgb(22 35 44 / 4%);
-  --shadow-2: 0 2px 4px rgb(22 35 44 / 6%), 0 8px 20px rgb(22 35 44 / 7%);
+  --radius-sm: 8px;
+  --radius:    13px;
+  --radius-lg: 20px;
 
-  --nav-height: 60px;
-  --content-max: 1120px;
+  /* Layered, low-opacity shadows read as depth rather than as a drop shadow. */
+  --shadow-1: 0 1px 1px rgb(13 26 33 / 4%), 0 2px 6px rgb(13 26 33 / 4%);
+  --shadow-2: 0 1px 2px rgb(13 26 33 / 5%), 0 6px 16px rgb(13 26 33 / 7%),
+              0 12px 32px rgb(13 26 33 / 4%);
+  --shadow-3: 0 2px 4px rgb(13 26 33 / 6%), 0 16px 40px rgb(13 26 33 / 12%);
+  --ring: 0 0 0 1px var(--rule);
 
+  --nav-w:        248px;
+  --nav-w-mini:   72px;
+  --nav-h:        62px;
+  --header-h:     58px;
+  --content-max:  1160px;
+
+  --ease: cubic-bezier(0.22, 0.72, 0.28, 1);
   --focus-ring: 2px solid var(--accent);
   --focus-offset: 2px;
 }
 
-/* ---------------------------------------------------------------- dark theme
-   Tokens are redefined; components are never styled inside the media query. */
+/* ---------------------------------------------------------------- dark
+   Tokens are redefined here; components are never styled inside a media query. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper:        #0f161b;
-    --surface:      #161f26;
-    --surface-2:    #1d2830;
-    --ink:          #e6ecf0;
-    --ink-2:        #b9c6ce;
-    --muted:        #90a1ab;
-    --rule:         #26333c;
-    --rule-strong:  #384852;
+    --bg:          #090e12;
+    --surface:     #10171d;
+    --surface-2:   #17212a;
+    --surface-3:   #1f2c36;
+    --ink:         #e9eff3;
+    --ink-2:       #b3c3cd;
+    --muted:       #7d919d;
+    --rule:        #1d2831;
+    --rule-strong: #2c3b46;
 
-    --accent:       #5fb3c9;
-    --accent-hover: #7cc4d7;
-    --accent-soft:  #14313b;
-    --accent-ink:   #0f161b;
+    --accent:       #4ec3dc;
+    --accent-hover: #74d3e7;
+    --accent-soft:  #0d2a33;
+    --accent-line:  #1f4d5b;
+    --accent-ink:   #04161c;
 
-    --good:         #6cc088;
-    --good-soft:    #16301f;
-    --warn:         #d9a45b;
-    --warn-soft:    #33260f;
-    --danger:       #e08585;
-    --danger-soft:  #351b1b;
+    --good:        #58c489;
+    --good-soft:   #10281c;
+    --warn:        #dda75d;
+    --warn-soft:   #2e2410;
+    --danger:      #e58b8b;
+    --danger-soft: #301a1a;
 
-    --reasoning:      #5fb3c9;
-    --reasoning-soft: #14313b;
-    --quant:          #b394d0;
-    --quant-soft:     #291f33;
-    --english:        #6cc088;
-    --english-soft:   #16301f;
-    --ga:             #d9a45b;
-    --ga-soft:        #33260f;
-    --neutral-key:    #90a1ab;
-    --neutral-soft:   #202b33;
+    --reasoning:      #4ec3dc;
+    --reasoning-soft: #0d2a33;
+    --quant:          #b79ae0;
+    --quant-soft:     #221c33;
+    --english:        #58c489;
+    --english-soft:   #10281c;
+    --ga:             #dda75d;
+    --ga-soft:        #2e2410;
+    --neutral-key:    #7d919d;
+    --neutral-soft:   #1a242c;
 
-    --shadow-1: 0 1px 2px rgb(0 0 0 / 30%);
-    --shadow-2: 0 2px 4px rgb(0 0 0 / 30%), 0 8px 20px rgb(0 0 0 / 25%);
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
+    --shadow-2: 0 2px 6px rgb(0 0 0 / 40%), 0 12px 32px rgb(0 0 0 / 34%);
+    --shadow-3: 0 4px 10px rgb(0 0 0 / 45%), 0 20px 48px rgb(0 0 0 / 40%);
   }
 }
 
-/* Manual toggle must beat the media query in BOTH directions. */
+/* The manual toggle must beat the media query in BOTH directions. */
 :root[data-theme='dark'] {
-  --paper: #0f161b;  --surface: #161f26;  --surface-2: #1d2830;
-  --ink: #e6ecf0;    --ink-2: #b9c6ce;    --muted: #90a1ab;
-  --rule: #26333c;   --rule-strong: #384852;
-  --accent: #5fb3c9; --accent-hover: #7cc4d7; --accent-soft: #14313b; --accent-ink: #0f161b;
-  --good: #6cc088;   --good-soft: #16301f;
-  --warn: #d9a45b;   --warn-soft: #33260f;
-  --danger: #e08585; --danger-soft: #351b1b;
-  --reasoning: #5fb3c9; --reasoning-soft: #14313b;
-  --quant: #b394d0;     --quant-soft: #291f33;
-  --english: #6cc088;   --english-soft: #16301f;
-  --ga: #d9a45b;        --ga-soft: #33260f;
-  --neutral-key: #90a1ab; --neutral-soft: #202b33;
-  --shadow-1: 0 1px 2px rgb(0 0 0 / 30%);
-  --shadow-2: 0 2px 4px rgb(0 0 0 / 30%), 0 8px 20px rgb(0 0 0 / 25%);
+  --bg: #090e12; --surface: #10171d; --surface-2: #17212a; --surface-3: #1f2c36;
+  --ink: #e9eff3; --ink-2: #b3c3cd; --muted: #7d919d;
+  --rule: #1d2831; --rule-strong: #2c3b46;
+  --accent: #4ec3dc; --accent-hover: #74d3e7; --accent-soft: #0d2a33;
+  --accent-line: #1f4d5b; --accent-ink: #04161c;
+  --good: #58c489; --good-soft: #10281c;
+  --warn: #dda75d; --warn-soft: #2e2410;
+  --danger: #e58b8b; --danger-soft: #301a1a;
+  --reasoning: #4ec3dc; --reasoning-soft: #0d2a33;
+  --quant: #b79ae0;    --quant-soft: #221c33;
+  --english: #58c489;  --english-soft: #10281c;
+  --ga: #dda75d;       --ga-soft: #2e2410;
+  --neutral-key: #7d919d; --neutral-soft: #1a242c;
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-2: 0 2px 6px rgb(0 0 0 / 40%), 0 12px 32px rgb(0 0 0 / 34%);
+  --shadow-3: 0 4px 10px rgb(0 0 0 / 45%), 0 20px 48px rgb(0 0 0 / 40%);
 }
 
 :root[data-theme='light'] {
-  --paper: #f4f6f7;  --surface: #ffffff;  --surface-2: #eef2f4;
-  --ink: #16232c;    --ink-2: #3a4b56;    --muted: #5c6b75;
-  --rule: #dde3e7;   --rule-strong: #c3ced5;
-  --accent: #1a5b6e; --accent-hover: #14495a; --accent-soft: #e0edf1; --accent-ink: #ffffff;
-  --good: #2f7a45;   --good-soft: #e2f0e6;
-  --warn: #8a5210;   --warn-soft: #f9efdf;
-  --danger: #a33a3a; --danger-soft: #f7e5e5;
-  --reasoning: #1a5b6e; --reasoning-soft: #e0edf1;
-  --quant: #6b4a86;     --quant-soft: #eee7f3;
-  --english: #2f7a45;   --english-soft: #e2f0e6;
-  --ga: #8a5210;        --ga-soft: #f9efdf;
-  --neutral-key: #5c6b75; --neutral-soft: #eaeef0;
-  --shadow-1: 0 1px 2px rgb(22 35 44 / 6%), 0 1px 3px rgb(22 35 44 / 4%);
-  --shadow-2: 0 2px 4px rgb(22 35 44 / 6%), 0 8px 20px rgb(22 35 44 / 7%);
+  --bg: #f7f9fa; --surface: #ffffff; --surface-2: #eff4f6; --surface-3: #e5ecef;
+  --ink: #0d1a21; --ink-2: #34474f; --muted: #647882;
+  --rule: #e2eaee; --rule-strong: #c8d5db;
+  --accent: #0f6e80; --accent-hover: #0b5766; --accent-soft: #e2f0f3;
+  --accent-line: #9fcdd6; --accent-ink: #ffffff;
+  --good: #257a49; --good-soft: #e2f1e8;
+  --warn: #8a5210; --warn-soft: #f9efdf;
+  --danger: #a83232; --danger-soft: #f9e7e7;
+  --reasoning: #0f6e80; --reasoning-soft: #e2f0f3;
+  --quant: #6a4a92;    --quant-soft: #eee9f5;
+  --english: #257a49;  --english-soft: #e2f1e8;
+  --ga: #8a5210;       --ga-soft: #f9efdf;
+  --neutral-key: #647882; --neutral-soft: #eaeff1;
+  --shadow-1: 0 1px 1px rgb(13 26 33 / 4%), 0 2px 6px rgb(13 26 33 / 4%);
+  --shadow-2: 0 1px 2px rgb(13 26 33 / 5%), 0 6px 16px rgb(13 26 33 / 7%),
+              0 12px 32px rgb(13 26 33 / 4%);
+  --shadow-3: 0 2px 4px rgb(13 26 33 / 6%), 0 16px 40px rgb(13 26 33 / 12%);
 }
