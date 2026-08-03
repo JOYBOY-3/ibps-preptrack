@@ -169,6 +169,35 @@ export function logMock(entry) {
   });
 }
 
+/**
+ * Record a confirmed exam date.
+ *
+ * The notification gives months only, so every countdown in the app is an
+ * assumption until this is set. When the call letter lands, one field here makes
+ * the whole app tell the truth again.
+ */
+export function setExamDate(which, isoDate) {
+  update(draft => {
+    draft.settings = { ...draft.settings, updatedAt: new Date().toISOString() };
+    const dates = { ...(draft.settings.examDates || {}) };
+    if (isoDate) dates[which] = isoDate; else delete dates[which];
+    draft.settings.examDates = dates;
+    return draft;
+  });
+}
+
+/** The state you applied for — it decides your cut-off and your vacancy count. */
+export function setStateApplied(name) {
+  update(draft => {
+    draft.settings = {
+      ...draft.settings,
+      stateApplied: name || null,
+      updatedAt: new Date().toISOString()
+    };
+    return draft;
+  });
+}
+
 export function setTheme(theme) {
   return update(draft => {
     draft.settings.theme = theme;

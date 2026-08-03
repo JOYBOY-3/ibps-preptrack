@@ -3,7 +3,7 @@
  * installed it works completely offline — on a train, with no signal, at 6 a.m.
  */
 
-const CACHE = 'preptrack-v11';
+const CACHE = 'preptrack-v12';
 
 const SHELL = [
   './',

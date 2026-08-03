@@ -14,6 +14,7 @@ import { logMock, logError } from '../state/actions.js';
 import { toast } from '../utils/ui.js';
 import { todayISO } from '../utils/dates.js';
 import { scoreChart } from '../components/chart.js';
+import { TARGETS, bandFor, MAINS, PRELIMS } from '../data/official.js';
 
 const BUCKETS = ['Concept', 'Slow', 'Silly', 'Selection'];
 
@@ -55,10 +56,36 @@ function recalc() {
     const c = Number($(`#c-${s.id}`)?.value) || 0;
     const sc = sectionScore(a, c, s.marksPerQ ?? 1);
     const cell = $(`#s-${s.id}`);
-    if (cell) cell.textContent = a ? sc.toFixed(2) : '—';
+    if (cell) {
+      cell.textContent = a ? sc.toFixed(2) : '—';
+      // Colour the section against its own target. Both papers have SECTIONAL
+      // cut-offs (notification clauses D and F) — a strong total does not rescue
+      // a section you failed.
+      cell.dataset.band = a ? (bandFor(stage, s.id, sc) || '') : '';
+    }
     total += a ? sc : 0; att += a; corr += Math.min(a, c);
   }
-  const t = $('#mock-total'); if (t) t.textContent = total.toFixed(2);
+  const t = $('#mock-total');
+  if (t) {
+    t.textContent = total.toFixed(2);
+    t.dataset.band = att ? (bandFor(stage, null, total) || '') : '';
+  }
+  const verdict = $('#mock-verdict');
+  if (verdict) {
+    const band = att ? bandFor(stage, null, total) : null;
+    const weak = sections().filter(s => {
+      const a = Number($(`#a-${s.id}`)?.value) || 0;
+      if (!a) return false;
+      return bandFor(stage, s.id, sectionScore(a, Number($(`#c-${s.id}`)?.value) || 0, s.marksPerQ ?? 1)) === 'below';
+    }).map(s => s.label);
+    verdict.textContent = !att ? ''
+      : weak.length ? `Below the sectional target in ${weak.join(' and ')} — that alone can end the attempt.`
+      : band === 'safe' ? 'Comfortably clear. Hold this and stop chasing the total.'
+      : band === 'good' ? 'On track. The gap to safe is one weak section, not more hours.'
+      : band === 'minimum' ? 'Borderline. This clears in a good year and misses in a bad one.'
+      : 'Below target. Fix the largest error bucket before adding volume.';
+    verdict.dataset.band = band || '';
+  }
   const acc = $('#mock-acc');
   if (acc) acc.textContent = att ? `${Math.round((corr / att) * 100)}%` : '—';
   const attEl = $('#mock-att'); if (attEl) attEl.textContent = String(att);
@@ -174,11 +201,26 @@ export function mocksView() {
     ]))
   ]);
 
+  const tgt = TARGETS[stage];
+  const targetStrip = el('div.target-strip', {}, [
+    el('div.target-strip__head', {}, [
+      el('span.eyebrow', { text: 'Target' }),
+      // NOT "60 min" — on a screen where 60 minutes is the paper length that reads
+      // as a duration. Spell it out.
+      el('span.muted', { text: `clear ${tgt.total.minimum} · good ${tgt.total.good} · safe ${tgt.total.safe}` })
+    ]),
+    el('div.target-strip__secs', {}, sections().map(s2 =>
+      el('span.tchip', { text: `${s2.label} ≥ ${tgt.sections[s2.id]?.minimum ?? '—'}` }))),
+    el('p.target-strip__note', { text: tgt.note })
+  ]);
+
   const totals = el('div.mock-totals', {}, [
     el('div.stat', {}, [el('span#mock-total.stat-value', { text: '0.00' }), el('span.stat-label', { text: 'total marks' })]),
     el('div.stat', {}, [el('span#mock-att.stat-value', { text: '0' }), el('span.stat-label', { text: 'attempted' })]),
     el('div.stat', {}, [el('span#mock-acc.stat-value', { text: '—' }), el('span.stat-label', { text: 'accuracy' })])
   ]);
+
+  const verdictLine = el('p#mock-verdict.mock-verdict', { text: '' });
 
   const history = mocks.length
     ? el('section.ios-section', {}, [
@@ -210,9 +252,11 @@ export function mocksView() {
 
     el('section.ios-section', {}, [
       el('h2.ios-section__title', { text: 'Log a mock' }),
+      targetStrip,
       el('div.ios-group.ios-group--hero', {}, [
         grid,
         totals,
+      verdictLine,
         el('div.field', { style: 'margin-top:var(--sp-4)' }, [
           el('label', { for: 'mock-platform', text: 'Platform (optional)' }),
           el('input#mock-platform.input', { type: 'text', placeholder: 'Testbook, Adda247, Oliveboard…' })

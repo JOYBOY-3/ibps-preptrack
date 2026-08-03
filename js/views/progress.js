@@ -9,6 +9,7 @@ import { scoreChart, bucketChart } from '../components/chart.js';
 import { CURRICULUM } from '../data/curriculum.js';
 import { PHASES } from '../data/phases.js';
 import { getState } from '../state/store.js';
+import { topicsByWeakness } from '../state/selectors.js';
 import {
   completedDayCount, studyDayCount, totalQuestions, streak, missedDays,
   countdowns, dayProgress, currentDayNumber, largestBucket, bucketCounts
@@ -51,6 +52,30 @@ export function progressView() {
     ]);
   });
 
+  const weak = topicsByWeakness(state);
+  const weakSection = weak.length
+    ? el('section.card', {}, [
+        el('div.card__body', {}, [
+          el('span.eyebrow', { text: 'Fix these first' }),
+          el('p.muted', { style: 'font-size:var(--step--1);margin:4px 0 var(--sp-4)',
+            text: 'Ranked by marks at stake — accuracy multiplied by how many questions the topic ' +
+                  'is actually worth. A weak Puzzles beats a weak Mensuration every time.' }),
+          el('div.weak-list', {}, weak.map(w => el('a.weak-row', { href: '#/plan' }, [
+            el('div.weak-row__bar', { style: `--pct:${Math.round(w.accuracy * 100)}%` }),
+            el('div.weak-row__text', {}, [
+              el('div.weak-row__name', { text: w.topic.name }),
+              el('div.weak-row__meta', {
+                text: `${Math.round(w.accuracy * 100)}% over ${w.attempted} questions · ` +
+                      `worth ~${w.weight.toFixed(0)} Q across both papers`
+              })
+            ]),
+            el(`span.chip${w.accuracy < 0.7 ? '.chip--danger' : '.chip--warn'}`,
+               { text: `${Math.round(w.accuracy * 100)}%` })
+          ])))
+        ])
+      ])
+    : null;
+
   return el('div.view', {}, [
     el('div.section-head', {}, [el('h1', { text: 'Progress' })]),
 
@@ -62,9 +87,11 @@ export function progressView() {
     ]),
 
     el('div.stat-grid', {}, [
-      ...countdowns().map(c => stat(c.daysLeft, `days to ${c.label.toLowerCase()}`,
+      ...countdowns(state).map(c => stat(c.daysLeft, `days to ${c.label.toLowerCase()}${c.assumed ? '*' : ''}`,
         c.id === 'application' || c.id === 'prelims' ? '.stat--warn' : ''))
     ]),
+
+    weakSection,
 
     missedDays(state) > 0
       ? el('div.banner.banner--warn', {}, [icon('alert', 'banner__icon'), el('div', {}, [

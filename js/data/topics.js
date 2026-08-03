@@ -128,16 +128,30 @@ const RAW = {
     ['e-mixed',           'Mixed English sectional',                      2, 0, 0, 40],
     ['e-sectional',       'English sectional',                            2, 0, 0, 40]
   ],
-  // Computer Awareness sits INSIDE the Mains "Reasoning Ability & Computer Aptitude"
-  // section, so these questions are worth 1.50 marks each — the highest in the paper.
-  // ~5 questions, and pure recall: their real value is the time they DON'T consume.
+  /**
+   * CORRECTED against the official CRP CSA-XVI notification.
+   *
+   * The Mains section is named "Reasoning Ability" — NOT "Reasoning Ability &
+   * Computer Aptitude". Computer literacy appears in this recruitment only as an
+   * ELIGIBILITY requirement (clause B.VI), checked at document verification.
+   * It is not an examined section.
+   *
+   * Two of these survive, because their content is genuinely General/Financial
+   * Awareness rather than computing: payment rails, CTS, IFSC and card
+   * tokenisation are standard GA asks, and cyber-security in banking recurs.
+   * They are scheduled in the GA slot, where they belong.
+   *
+   * The other four are tier 5 — kept in the catalogue with their guidance intact,
+   * so anyone who wants them can read them, but no longer consuming study days
+   * that Reasoning and DI need more.
+   */
   computer: [
-    ['comp-fundamentals', 'Computer fundamentals — hardware, memory, generations', 2, 0, 5, 60],
-    ['comp-os',           'Operating systems & MS Office',                        2, 0, 5, 60],
-    ['comp-network',      'Networking & internet',                                2, 0, 5, 60],
-    ['comp-security',     'Computer security & cyber threats',                    2, 0, 5, 50],
-    ['comp-database',     'Database basics & abbreviations',                      2, 0, 5, 50],
-    ['comp-banking',      'Computing in banking — CBS, payment rails, CTS',       2, 0, 5, 50]
+    ['comp-banking',      'Banking technology — CBS, payment rails, CTS, IFSC',   2, 0, 4, 50],
+    ['comp-security',     'Cyber security in banking',                            3, 0, 3, 40],
+    ['comp-fundamentals', 'Computer fundamentals (optional — not examined 2026)',  5, 0, 0, 0],
+    ['comp-os',           'Operating systems & MS Office (optional)',              5, 0, 0, 0],
+    ['comp-network',      'Networking & internet (optional)',                      5, 0, 0, 0],
+    ['comp-database',     'Database basics & abbreviations (optional)',            5, 0, 0, 0]
   ],
   ga: [
     ['ga-rbi',            'RBI — structure & functions',                  2, 0, 11, 0],
@@ -201,7 +215,7 @@ export const SUBJECT_META = {
   reasoning: { label: 'Reasoning', short: 'REAS', varName: '--reasoning' },
   quant:     { label: 'Quantitative', short: 'QUANT', varName: '--quant' },
   english:   { label: 'English', short: 'ENG', varName: '--english' },
-  computer:  { label: 'Computer Awareness', short: 'COMP', varName: '--computer' },
+  computer:  { label: 'Banking Technology', short: 'TECH', varName: '--computer' },
   ga:        { label: 'General Awareness', short: 'GA', varName: '--ga' }
 };
 

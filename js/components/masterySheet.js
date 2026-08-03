@@ -89,10 +89,11 @@ export async function openMasterySheet(subject, topicId, topicName) {
   const m = await getMastery(subject, topicId);
 
   if (!m) {
-    body.replaceChildren(el('div.ms-empty', {}, [
-      el('p', { text: 'Detailed guidance for this topic is not available yet.' }),
-      el('p.muted', { text: 'The daily plan still applies — use the block note above and your core book.' })
-    ]));
+    // 24 days schedule ACTIVITIES rather than topics — "Banking awareness, full
+    // revision", "Reasoning sectional", "Error notebook, complete pass". They have
+    // no solving method to teach, so they used to open a blank sheet. They get a
+    // session protocol instead, which is what they actually need.
+    body.replaceChildren(sessionGuide(topicId, topicName));
     return;
   }
 
@@ -149,6 +150,85 @@ export async function openMasterySheet(subject, topicId, topicName) {
         : null
     ]))
   );
+}
+
+/** How to RUN a session, for the scheduled activities that have no method. */
+const SESSION = {
+  revision: {
+    match: /-rev$|revision/i,
+    title: 'How to run a revision pass',
+    steps: [
+      'Close the book. Write down everything you remember on one sheet, from memory only. This is the whole exercise — reading is not revision.',
+      'Now open your notes and mark, in red, only what you MISSED. Not what you got right.',
+      'Count the red marks. Fewer than 5 means this block is solid; park it for two weeks.',
+      'More than 15 means you never learned it — this is not a revision problem, so re-study it in tomorrow\'s slot instead.',
+      'Finish by writing the 5 hardest items onto a single index card. That card, not the notes, is what you read in the last week.'
+    ],
+    check: 'You can reproduce 80% of the block on blank paper in under 10 minutes.'
+  },
+  sectional: {
+    match: /sectional|marathon/i,
+    title: 'How to run a sectional',
+    steps: [
+      'Set a timer for the REAL sectional time and do not pause it. Prelims: 20 minutes. Mains Reasoning or English: 35 minutes.',
+      'Two rounds. Round one takes only what you can see the path to in 45 seconds. Round two returns to what you skipped.',
+      'Mark every question you SKIPPED as well as every one you got wrong — selection errors cost more than concept errors and are invisible unless you record them.',
+      'Score it with negative marking. −0.25 per wrong answer. A raw count of correct answers is not a score.',
+      'Log it in Mocks as a sectional so it joins the trend, and put every error in the error notebook with its bucket.'
+    ],
+    check: 'Your attempt count sits inside the target band and accuracy stays above 90%.'
+  },
+  audit: {
+    match: /audit/i,
+    title: 'How to run the syllabus audit',
+    steps: [
+      'Open Progress and read the weakest-topics list. Do not rely on memory for this — memory flatters you.',
+      'For every topic below 75% accuracy, write it on a single list. That list is your remaining syllabus.',
+      'Anything with zero questions logged is NOT covered, whatever the tick says. Ticking a block means you sat there; accuracy means you learned it.',
+      'Rank the list by exam weightage, not by how much you dislike each topic.',
+      'The top five become the weak-area slots for the next fortnight. Ignore the rest until those five move.'
+    ],
+    check: 'You can name your five weakest high-weightage topics without looking.'
+  },
+  errorbook: {
+    match: /error notebook|errorbook/i,
+    title: 'How to run an error-notebook pass',
+    steps: [
+      'Read only the ERROR, not the solution. Try to re-solve it cold.',
+      'Solved it instantly? Strike it out — it is learned and it is now noise.',
+      'Hesitated? Leave it. It comes round again next pass.',
+      'Failed it again? It is a concept gap, not a slip. Schedule the parent topic as a full study block.',
+      'Count the buckets at the end. Whichever is largest is the ONLY thing you change next week.'
+    ],
+    check: 'The notebook shrinks between passes. If it only grows, you are collecting errors instead of fixing them.'
+  }
+};
+
+function sessionGuide(topicId, topicName) {
+  const key = Object.keys(SESSION).find(k => SESSION[k].match.test(topicId) || SESSION[k].match.test(topicName || ''));
+  const g = key ? SESSION[key] : null;
+
+  if (!g) {
+    return el('div.ms-empty', {}, [
+      el('p', { text: 'This is a scheduled session rather than a topic, so there is no method to teach.' }),
+      el('p.muted', { text: 'Follow the block note on the card and use your own notes and error book.' })
+    ]);
+  }
+
+  return el('div', {}, [
+    el('p.ms-lede', {
+      text: 'This is a session, not a topic — there is nothing new to learn here. ' +
+            'What matters is running it properly, because a session done passively is a session wasted.'
+    }),
+    el('section.ms-sec.ms-sec--method', {}, [
+      el('h3.ms-sec__title', { text: g.title }),
+      el('ol.ms-steps', {}, g.steps.map(x => el('li', { text: x })))
+    ]),
+    el('section.ms-sec', {}, [
+      el('h3.ms-sec__title', { text: 'You have done it properly when' }),
+      el('p', { text: g.check })
+    ])
+  ]);
 }
 
 /**

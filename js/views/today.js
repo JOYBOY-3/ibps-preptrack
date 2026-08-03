@@ -94,7 +94,7 @@ export function todayView() {
   const saved = state.days[dayNumber] || {};
   const prog = dayProgress(state, dayNumber);
   const firstIncomplete = day.blocks.find(b => !saved.blocks?.[b.id]);
-  const prelims = countdowns().find(c => c.id === 'prelims');
+  const prelims = countdowns(state).find(c => c.id === 'prelims');
   const s = streak(state);
 
   const subjectChips = day.blocks
@@ -118,7 +118,13 @@ export function todayView() {
       el('span.progress-count', { text: `${prog.done} of ${prog.total} blocks` }),
       el('span.chip.chip--good.day-complete-chip', { text: 'Day complete', hidden: !prog.complete }),
       s > 0 ? el('span.chip', {}, [icon('flame'), ` ${s} day streak`]) : null,
-      prelims ? el('span.chip', {}, [icon('clock'), ` ${prelims.daysLeft} days to Prelims`]) : null
+      prelims
+        ? el(`span.chip${prelims.assumed ? '' : '.chip--accent'}`, {
+            title: prelims.assumed
+              ? 'The notification says only "October, 2026". This is the plan\'s assumed date — set the real one in Settings when your call letter arrives.'
+              : 'Your confirmed exam date'
+          }, [icon('clock'), ` ${prelims.daysLeft} days to Prelims${prelims.assumed ? '*' : ''}`])
+        : null
     ])
   ]);
 

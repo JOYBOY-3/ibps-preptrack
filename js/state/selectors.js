@@ -112,11 +112,32 @@ export function topicStatus(state, topicId) {
 }
 
 /** Topics with real practice logged, worst accuracy first. Drives "needs rework". */
-export function topicsByWeakness(state) {
+/**
+ * Weakest topics, ranked by what fixing them is WORTH.
+ *
+ * Pure accuracy order is the wrong list: it puts a 62% score on a one-question
+ * topic above a 71% score on Puzzles, which is 17 questions in Prelims and 19 in
+ * Mains. The cost of a weakness is (1 − accuracy) × its weight in the papers, and
+ * that is what should decide where the next hour goes.
+ */
+export function topicsByWeakness(state, limit = 6) {
   return Object.keys(state.topics)
-    .map(id => ({ id, topic: TOPIC_BY_ID[id], status: topicStatus(state, id), accuracy: topicAccuracy(state, id) }))
-    .filter(t => t.topic && t.accuracy !== null)
-    .sort((a, b) => a.accuracy - b.accuracy);
+    .map(id => {
+      const topic = TOPIC_BY_ID[id];
+      const accuracy = topicAccuracy(state, id);
+      if (!topic || accuracy === null) return null;
+      const rec = state.topics[id] || {};
+      const attempted = (rec.untimed || 0) + (rec.timed || 0);
+      const weight = (topic.prelimsWeight || 0) + (topic.mainsWeight || 0);
+      return {
+        id, topic, accuracy, attempted, weight,
+        status: topicStatus(state, id),
+        cost: (1 - accuracy) * weight          // marks left on the table
+      };
+    })
+    .filter(t => t && t.attempted >= 10)       // fewer than 10 answers is noise, not a signal
+    .sort((a, b) => b.cost - a.cost)
+    .slice(0, limit);
 }
 
 export function bucketCounts(state) {
@@ -134,9 +155,21 @@ export function largestBucket(state) {
   return entries.sort((a, b) => b[1] - a[1])[0][0];
 }
 
-export function countdowns() {
+export function countdowns(state = null) {
   const t = todayISO();
-  return KEY_DATES.map(k => ({ ...k, daysLeft: Math.max(0, daysBetween(t, k.date)) }));
+  // The notification gives MONTHS, not dates ("October, 2026" / "December, 2026").
+  // Settings lets you enter the real date the moment the call letter arrives; until
+  // then these are the plan's assumed dates and the UI must label them as such.
+  const set = state?.settings?.examDates || {};
+  return KEY_DATES.map(k => {
+    const date = set[k.id] || k.date;
+    return {
+      ...k,
+      date,
+      assumed: (k.id === 'prelims' || k.id === 'mains') && !set[k.id],
+      daysLeft: Math.max(0, daysBetween(t, date))
+    };
+  });
 }
 
 export function daysSinceBackup(state) {

@@ -10,9 +10,10 @@
 import { el } from '../utils/dom.js';
 import { icon } from '../components/icons.js';
 import { getState, replaceState } from '../state/store.js';
-import { setTheme } from '../state/actions.js';
+import { setTheme, setExamDate, setStateApplied } from '../state/actions.js';
 import { exportJSON, importJSON, clearAll, freshState, storageBytes } from '../state/persist.js';
-import { completedDayCount, totalQuestions } from '../state/selectors.js';
+import { completedDayCount, totalQuestions, countdowns } from '../state/selectors.js';
+import { NOTIFICATION, VACANCIES, REQUIREMENTS, MAINS, PRELIMS, NEGATIVE_MARK, SCHEDULE } from '../data/official.js';
 import { applyTheme, toast } from '../utils/ui.js';
 import { getIdentity, signOut, signIn, explainAuthError } from '../sync/googleAuth.js';
 import { sync, getSyncStatus, isConnected, connect, disconnectSync } from '../sync/syncEngine.js';
@@ -171,6 +172,9 @@ export function settingsView() {
       el('div.ios-group.ios-group--hero', {}, [syncHero])
     ]),
 
+    examSection(state),
+    officialSection(),
+
     group('Appearance', [
       row('Theme', 'Auto follows your device.', themeSeg)
     ]),
@@ -185,4 +189,121 @@ export function settingsView() {
 
     advanced
   ]);
+}
+
+/* ------------------------------------------------------------------ your exam */
+
+/**
+ * The notification gives MONTHS, not dates. Everything in this app that counts
+ * down is therefore a guess until these two fields are filled in — so the app
+ * asks for them plainly rather than pretending it knows.
+ */
+function examSection(state) {
+  const set = state.settings?.examDates || {};
+  const cd = countdowns(state);
+  const row = (id, label, window) => {
+    const c = cd.find(x => x.id === id);
+    const input = el('input.input', {
+      type: 'date', value: set[id] || '',
+      min: '2026-08-05', max: '2027-03-31',
+      onchange: e => {
+        setExamDate(id, e.target.value || null);
+        toast(e.target.value ? `${label} set — countdowns updated` : `${label} cleared`);
+        requestAnimationFrame(() => window_reload());
+      }
+    });
+    return el('div.ios-row.ios-row--stack', {}, [
+      el('div.ios-row__text', {}, [
+        el('div.ios-row__label', { text: label }),
+        el('div.ios-row__desc', {
+          text: set[id]
+            ? `Confirmed · ${c?.daysLeft ?? 0} days away`
+            : `Notification says "${window}" only. Using ${c?.date} for now — ${c?.daysLeft ?? 0} days.`
+        })
+      ]),
+      input
+    ]);
+  };
+
+  return el('section.ios-section', {}, [
+    el('h2.ios-section__title', { text: 'Your exam' }),
+    el('div.ios-group', {}, [
+      row('prelims', 'Prelims date', 'October, 2026'),
+      row('mains', 'Mains date', 'December, 2026')
+    ]),
+    el('p.ios-note', {
+      text: 'IBPS publishes only the month in the notification. Set the real date the day your ' +
+            'call letter arrives — every countdown in the app depends on it.'
+    }),
+    el('div.ios-group', { style: 'margin-top:var(--sp-4)' }, [
+      el('div.ios-row.ios-row--stack', {}, [
+        el('div.ios-row__text', {}, [
+          el('div.ios-row__label', { text: 'State you applied for' }),
+          el('div.ios-row__desc', {
+            text: state.settings?.stateApplied
+              ? `${VACANCIES.byState[state.settings.stateApplied] ?? '?'} vacancies notified`
+              : 'Clerical recruitment is state-wise — your cut-off is your state\'s cut-off.'
+          })
+        ]),
+        el('select.select', {
+          onchange: e => { setStateApplied(e.target.value || null); toast('State saved');
+                           requestAnimationFrame(() => window_reload()); }
+        }, [
+          el('option', { value: '', text: 'Not set' }),
+          ...Object.keys(VACANCIES.byState).sort().map(n =>
+            el('option', { value: n, text: `${n} — ${VACANCIES.byState[n]}`,
+                           selected: state.settings?.stateApplied === n ? 'selected' : null }))
+        ])
+      ])
+    ])
+  ]);
+}
+
+/* ------------------------------------------------- straight from the notification */
+
+function officialSection() {
+  const fact = (k, v) => el('div.ios-row', {}, [
+    el('div.ios-row__text', {}, [el('div.ios-row__label', { text: k })]),
+    el('span.ios-value.mono', { text: v })
+  ]);
+
+  return el('section.ios-section', {}, [
+    el('h2.ios-section__title', { text: 'The exam, from the notification' }),
+    el('div.ios-group', {}, [
+      fact('Prelims', `${PRELIMS.totalQuestions} Q · ${PRELIMS.totalMarks} marks · ${PRELIMS.totalMinutes} min`),
+      fact('Mains', `${MAINS.totalQuestions} Q · ${MAINS.totalMarks} marks · ${MAINS.totalMinutes} min`),
+      fact('Negative marking', `−${NEGATIVE_MARK} per wrong answer`),
+      fact('Merit list', 'Mains score only'),
+      fact('Vacancies', VACANCIES.total.toLocaleString('en-IN'))
+    ]),
+    el('p.ios-note', { text: VACANCIES.note }),
+
+    el('details.ios-adv', { style: 'margin-top:var(--sp-4)' }, [
+      el('summary', {}, [el('span', { text: 'Six things that are not about studying' }), icon('alert')]),
+      el('div.ios-advbody', {},
+        REQUIREMENTS.map(r => el('div.req', {}, [
+          el('div.req__title', { text: r.title }),
+          el('div.req__detail', { text: r.detail })
+        ])))
+    ]),
+
+    el('details.ios-adv', {}, [
+      el('summary', {}, [el('span', { text: 'Official timeline' }), icon('clock')]),
+      el('div.ios-advbody', {},
+        SCHEDULE.map(sc => el('div.ios-row', {}, [
+          el('div.ios-row__text', {}, [el('div.ios-row__label', { text: sc.label })]),
+          el('span.ios-value', { text: sc.window })
+        ])))
+    ]),
+
+    el('p.ios-note', {
+      text: `Source: IBPS ${NOTIFICATION.code} notification, ${NOTIFICATION.issued}. ` +
+            'Nothing on this screen comes from a coaching site.'
+    })
+  ]);
+}
+
+/** Re-render after a settings change, since views only rebuild on route change. */
+function window_reload() {
+  globalThis.dispatchEvent(new HashChangeEvent('hashchange'));
 }

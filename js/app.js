@@ -21,7 +21,7 @@ import { gateView } from './views/gate.js';
 import { hasSignedInBefore, initAuth } from './sync/googleAuth.js';
 import { initSyncListeners, markDirty, syncOnGesture, onSyncStatus } from './sync/syncEngine.js';
 
-export const BUILD = 'v11';
+export const BUILD = 'v12';
 
 const ROUTES = [
   { id: 'today',    path: '#/today',    label: 'Today',    icon: 'today',    render: todayView },

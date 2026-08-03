@@ -154,13 +154,21 @@ const P3 = [
   ['r-assumption',    'q-di-bar',      'e-rc-econ',         'ga-banking-rev']
 ];
 
-// Six Computer Awareness modules, spread across the middle of P3 so each gets
-// revisited by the spaced-repetition ladder before 27 December.
-const P3_COMPUTER_DAYS = [8, 11, 14, 17, 20, 23];
-const P3_COMPUTER = [
-  'comp-fundamentals', 'comp-os', 'comp-network',
-  'comp-security', 'comp-database', 'comp-banking'
-];
+/**
+ * Banking technology sits in P4's GA slot, not P3's.
+ *
+ * It used to take the P3 REASONING slot on six days, on the belief that the Mains
+ * section was "Reasoning Ability & Computer Aptitude". The official notification
+ * names it "Reasoning Ability" only, so that was wrong. What survives is the
+ * content that is genuinely General/Financial Awareness — payment rails, CTS,
+ * IFSC, tokenisation, cyber-security in banking.
+ *
+ * It goes in P4 because P3's GA rotation is exactly 28 topics for 28 days, so
+ * displacing one would silently drop it from the plan. P4's rotation is 15 topics
+ * cycling over 28 days, so these two land on repeat slots and cost nothing.
+ */
+const P4_TECH_DAYS = [9, 18];
+const P4_TECH = ['comp-banking', 'comp-security'];
 
 // ------------------------------------------------------------------ P4 · days 99–126
 const P4_FOCUS = [
@@ -337,19 +345,7 @@ function buildDay(day) {
     const i = day - 69;
     base.weekTheme = 'Mains Foundation';
 
-    /**
-     * Computer Awareness occupies the Reasoning slot on six days.
-     *
-     * That is not a compromise — it is exactly where it sits in the real paper:
-     * the Mains section is "Reasoning Ability & Computer Aptitude", one 40-question
-     * 60-mark block. Placing it mid-phase leaves room for two revision passes
-     * before Mains, and it is pure recall so it does not need a run-up.
-     */
-    const assign = [...P3[i]];
-    const ci = P3_COMPUTER_DAYS.indexOf(i);
-    if (ci !== -1) assign[0] = P3_COMPUTER[ci];
-
-    base.blocks = blocksFor(day, phase, assign);
+    base.blocks = blocksFor(day, phase, P3[i]);
     if ((i + 1) % 7 === 0) {
       base.type = 'review';
       base.headline = 'Mains review — 2 sectionals + full GA week revision';
@@ -372,11 +368,15 @@ function buildDay(day) {
     base.headline = isMockDay
       ? 'FULL-LENGTH Mains mock — 125 minutes, sectionally timed'
       : 'Build day — Reasoning, Quant, English, GA';
+    const p4ga = P4_TECH_DAYS.indexOf(i) !== -1
+      ? P4_TECH[P4_TECH_DAYS.indexOf(i)]
+      : P4_GA[i % P4_GA.length];
+
     base.blocks = blocksFor(day, phase, [
       P4_REASONING[bi % P4_REASONING.length],
       P4_QUANT[bi % P4_QUANT.length],
       P4_ENGLISH[bi % P4_ENGLISH.length],
-      P4_GA[i % P4_GA.length]
+      p4ga
     ], {}, isMockDay);
   }
 
