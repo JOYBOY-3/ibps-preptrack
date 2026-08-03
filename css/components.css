@@ -1787,11 +1787,22 @@ body {
 .syl-st { margin-top: var(--sp-3); table-layout: fixed; width: 100%; }
 .syl-st th, .syl-st td { padding: var(--sp-2) var(--sp-2); }
 
-.syl-st__name { width: auto; white-space: normal; word-break: break-word; hyphens: auto; }
-.syl-st__n    { width: 3.4rem; text-align: right; font-variant-numeric: tabular-nums; }
-.syl-st__time { width: 4.6rem; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* Element-qualified on purpose. The base `.g-table th, .g-table td` rule is
+   specificity (0,1,1) and sets text-align:left, so a bare `.syl-st__n` at (0,1,0)
+   LOSES on the data cells while `.syl-st thead .syl-st__n` at (0,2,0) wins on the
+   headers — which is exactly how the headings ended up right-aligned over
+   left-aligned numbers. Every rule below is (0,2,1) so head, body and foot all
+   agree. */
+.syl-st th.syl-st__name,
+.syl-st td.syl-st__name { width: auto; text-align: left; white-space: normal; word-break: break-word; hyphens: auto; }
+
+.syl-st th.syl-st__n,
+.syl-st td.syl-st__n    { width: 3.6rem; text-align: right; font-variant-numeric: tabular-nums; }
+
+.syl-st th.syl-st__time,
+.syl-st td.syl-st__time { width: 4.8rem; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
 .syl-st thead th { vertical-align: bottom; }
-.syl-st thead .syl-st__n, .syl-st thead .syl-st__time { text-align: right; }
 
 .syl-st__seq {
   display: block; font-size: 0.56rem; font-weight: 800;
@@ -1812,7 +1823,7 @@ body {
 /* Below ~360px every unit label is dropped to its shortest honest form. */
 @media (max-width: 360px) {
   .syl-st th, .syl-st td { padding-inline: 6px; font-size: 0.68rem; }
-  .syl-st__n    { width: 2.7rem; }
-  .syl-st__time { width: 3.8rem; }
+  .syl-st th.syl-st__n,    .syl-st td.syl-st__n    { width: 2.9rem; }
+  .syl-st th.syl-st__time, .syl-st td.syl-st__time { width: 4rem; }
   .syl-official { padding: var(--sp-3); }
 }
