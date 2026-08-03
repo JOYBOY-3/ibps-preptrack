@@ -19,11 +19,12 @@ import { settingsView } from './views/settings.js';
 import { weekView } from './views/week.js';
 import { mocksView } from './views/mocks.js';
 import { gateView } from './views/gate.js';
+import { guideView } from './views/guide.js';
 import { hasSignedInBefore, initAuth } from './sync/googleAuth.js';
 import { initSyncListeners, markDirty, syncOnGesture, onSyncStatus } from './sync/syncEngine.js';
 import { advanceStaleRevisions, scheduleExamSweep } from './state/actions.js';
 
-export const BUILD = 'v17';
+export const BUILD = 'v18';
 
 const ROUTES = [
   { id: 'today',    path: '#/today',    label: 'Today',    icon: 'today',    render: todayView },
@@ -34,11 +35,24 @@ const ROUTES = [
   { id: 'settings', path: '#/settings', label: 'Settings', icon: 'settings', render: settingsView }
 ];
 
+/**
+ * Routes that are NOT in the bottom bar.
+ *
+ * That bar is a six-column grid of the places you go daily. The guide is read
+ * once or twice, and cramping six daily destinations to make room for it would be
+ * a bad trade. It is reachable from the header, from Settings and from the gate.
+ */
+const EXTRA_ROUTES = [
+  { id: 'guide', path: '#/guide', label: 'How to use this', icon: 'book', render: guideView }
+];
+
+const ALL_ROUTES = [...ROUTES, ...EXTRA_ROUTES];
+
 // ---------------------------------------------------------------- router
 function parseHash() {
   const hash = location.hash || '#/today';
   const [, section, param] = hash.split('/');
-  const route = ROUTES.find(r => r.id === section) || ROUTES[0];
+  const route = ALL_ROUTES.find(r => r.id === section) || ROUTES[0];
   return { route, param: param ? Number(param) : null };
 }
 
@@ -149,6 +163,8 @@ function bootApp() {
       ]),
       el('div.header-actions', {}, [
         el('span#sync-pip.sync-pip', { title: 'Sync status', 'aria-hidden': 'true' }),
+        el('a.icon-btn', { href: '#/guide', 'aria-label': 'How to use this app', title: 'How to use this app' },
+          [icon('book')]),
         el('a.icon-btn', { href: '#/settings', 'aria-label': 'Settings' }, [icon('settings')])
       ])
     ]),

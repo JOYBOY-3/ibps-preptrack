@@ -172,6 +172,17 @@ export function settingsView() {
       el('div.ios-group.ios-group--hero', {}, [syncHero])
     ]),
 
+    el('section.ios-section', {}, [
+      el('a.guide-cta', { href: '#/guide' }, [
+        el('span.guide-cta__icon', {}, [icon('book')]),
+        el('div.guide-cta__text', {}, [
+          el('div.guide-cta__title', { text: 'How to use this app' }),
+          el('div.guide-cta__sub', { text: 'The daily loop, what each screen is for, and how the exam is actually won' })
+        ]),
+        el('span.guide-cta__chev', { 'aria-hidden': 'true' })
+      ])
+    ]),
+
     examSection(state),
     officialSection(),
 

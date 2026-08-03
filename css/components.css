@@ -1538,3 +1538,123 @@ body {
 .wk-topic:focus-visible,
 .wk-card:focus-visible,
 .ios-row a:focus-visible { position: relative; z-index: 2; }
+
+/* ============================================================================
+   The in-app guide.
+
+   Long-form reading inside an app built for glanceable cards. Two rules carry it:
+   measure is capped so lines never run past comfortable reading width on a
+   desktop sidebar layout, and every table scrolls inside its own box so the page
+   body never moves sideways on a 320px phone.
+   ========================================================================== */
+
+.g-view { max-width: 68ch; }
+
+.g-sec {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  box-shadow: var(--shadow-1);
+  overflow: clip;                 /* clip, not hidden — see .g-sum focus below */
+}
+.g-sum {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
+  padding: var(--sp-4);
+  cursor: pointer; list-style: none;
+  transition: background 0.16s var(--ease);
+}
+.g-sum::-webkit-details-marker { display: none; }
+.g-sum:hover { background: var(--surface-2); }
+.g-sum::after {
+  content: ''; flex: none; width: 8px; height: 8px;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+  rotate: 45deg; margin: -4px 4px 0 0;
+  transition: rotate 0.2s var(--ease);
+}
+.g-sec[open] > .g-sum::after { rotate: -135deg; margin-top: 2px; }
+.g-sec[open] > .g-sum { border-bottom: 1px solid var(--rule); }
+.g-sum__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.g-sum__title { font-weight: 700; font-size: var(--step-0); letter-spacing: var(--tracking-snug); }
+.g-sum__sub { font-size: var(--step--2); color: var(--muted); }
+
+.g-body { padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-4); }
+.g-body > * { margin: 0; }
+
+.g-lead { font-size: var(--step-0); font-weight: 650; line-height: 1.55; }
+.g-p { font-size: var(--step--1); line-height: 1.65; color: var(--ink); }
+.g-h3 {
+  font-size: var(--step--1); font-weight: 750; margin-top: var(--sp-2);
+  letter-spacing: var(--tracking-wide); text-transform: uppercase; color: var(--muted);
+}
+
+.g-list { margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: var(--sp-2); }
+.g-list li { font-size: var(--step--1); line-height: 1.6; }
+.g-list--bad li::marker { color: var(--danger); }
+.g-steps { margin: 0; padding-left: 1.3rem; display: flex; flex-direction: column; gap: var(--sp-3); }
+.g-steps li { font-size: var(--step--1); line-height: 1.6; }
+.g-steps li::marker { color: var(--accent); font-weight: 800; }
+
+/* Tables scroll inside themselves. The page body must never scroll sideways. */
+.g-tablewrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+}
+.g-table { width: 100%; border-collapse: collapse; font-size: var(--step--2); }
+.g-table th, .g-table td {
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left; vertical-align: top;
+  border-bottom: 1px solid var(--hairline);
+  line-height: 1.5;
+}
+.g-table thead th {
+  font-size: var(--step--2); font-weight: 750; color: var(--muted);
+  letter-spacing: var(--tracking-wide); text-transform: uppercase;
+  background: var(--surface-2); white-space: nowrap;
+}
+.g-table tbody th { font-weight: 650; white-space: nowrap; }
+.g-table tbody td { color: var(--muted); font-variant-numeric: tabular-nums; }
+.g-table tr:last-child th, .g-table tr:last-child td { border-bottom: 0; }
+
+.g-screens { display: flex; flex-direction: column; gap: var(--sp-3); }
+.g-screen { display: flex; gap: var(--sp-3); align-items: flex-start; }
+.g-screen__icon {
+  flex: none; display: grid; place-items: center;
+  width: 30px; height: 30px; border-radius: 9px;
+  background: var(--accent-soft); color: var(--accent);
+}
+.g-screen__name { font-weight: 700; font-size: var(--step--1); }
+.g-screen__text { font-size: var(--step--2); color: var(--muted); line-height: 1.55; margin-top: 2px; }
+
+.g-foot { font-size: var(--step--2); color: var(--muted); line-height: 1.5; text-align: center; padding: var(--sp-4) var(--sp-2) 0; }
+
+/* ---- entry point from Settings */
+.guide-cta {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 16px; box-shadow: var(--shadow-1);
+  color: inherit; text-decoration: none;
+  transition: background 0.16s var(--ease), border-color 0.16s var(--ease);
+}
+.guide-cta:hover { background: var(--surface-2); border-color: var(--accent); }
+.guide-cta__icon {
+  flex: none; display: grid; place-items: center;
+  width: 38px; height: 38px; border-radius: 11px;
+  background: var(--accent-soft); color: var(--accent);
+}
+.guide-cta__text { flex: 1; min-width: 0; }
+.guide-cta__title { font-weight: 700; font-size: var(--step--1); }
+.guide-cta__sub { font-size: var(--step--2); color: var(--muted); line-height: 1.45; margin-top: 2px; }
+.guide-cta__chev {
+  flex: none; width: 8px; height: 8px;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+  rotate: -45deg; margin-right: 3px;
+}
+
+@media (max-width: 400px) {
+  .g-body { padding: var(--sp-3); gap: var(--sp-3); }
+  .g-sum { padding: var(--sp-3); }
+  .g-table th, .g-table td { padding: var(--sp-2); }
+}
