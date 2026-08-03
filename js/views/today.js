@@ -16,6 +16,7 @@ import {
   currentDayNumber, dayProgress, dueRevisions, streak, countdowns
 } from '../state/selectors.js';
 import { formatLong, relative } from '../utils/dates.js';
+import { prefetchSubject } from '../data/mastery.js';
 
 let viewedDay = null;
 
@@ -116,6 +117,9 @@ export function todayView() {
       el('div', {}, [el('strong', { text: `Day ${day.day} complete. ` }),
         'All blocks done — that is what counts. No partial credit, no self-deception.'])]));
   }
+
+  // Warm the mastery files for today's subjects so the sheet opens instantly.
+  for (const b of day.blocks) if (b.subject) prefetchSubject(b.subject);
 
   const cards = day.blocks.map(b => blockCard(b, {
     done: !!saved.blocks?.[b.id],

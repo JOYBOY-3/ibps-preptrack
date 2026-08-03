@@ -5,6 +5,7 @@ const svg = (paths, viewBox = '0 0 24 24') =>
         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
 
 export const ICONS = {
+  close:    svg('<path d="M6 6l12 12M18 6L6 18"/>'),
   menu:     svg('<path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17"/>'),
   today:    svg('<rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3 9.5h18"/><path d="M8.5 14.5l2.2 2.2 4.3-4.4"/>'),
   week:     svg('<rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M9 9.5v11M15 9.5v11"/>'),

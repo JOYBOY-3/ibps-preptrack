@@ -3,7 +3,7 @@
  * installed it works completely offline — on a train, with no signal, at 6 a.m.
  */
 
-const CACHE = 'preptrack-v3';
+const CACHE = 'preptrack-v4';
 
 const SHELL = [
   './',
@@ -38,6 +38,8 @@ const SHELL = [
   './js/views/progress.js',
   './js/views/settings.js',
   './js/components/blockCard.js',
+  './js/data/mastery.js',
+  './js/components/masterySheet.js',
   './js/components/icons.js',
   './js/utils/dom.js',
   './js/utils/ui.js',

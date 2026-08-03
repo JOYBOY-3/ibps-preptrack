@@ -840,3 +840,181 @@
   .btn:active:not(:disabled), .nav-item:active,
   .icon-btn:active, .nav-toggle:active { scale: 1; }
 }
+
+/* ============================================================================
+   Mastery sheet — native <dialog>. Bottom sheet on phones, modal on desktop.
+   ========================================================================== */
+
+.block-actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+  flex-wrap: wrap;
+}
+.block-actions .btn { flex: 1 1 160px; }
+
+.btn--ghost {
+  background: var(--surface-2);
+  border-color: transparent;
+  color: var(--ink-2);
+  font-weight: 600;
+}
+.btn--ghost:hover { background: var(--surface-3); border-color: var(--rule); color: var(--ink); }
+
+.ms {
+  width: 100%;
+  max-width: 720px;
+  max-height: 92dvh;
+  margin: auto auto 0;
+  padding: 0;
+  border: none;
+  border-radius: 22px 22px 0 0;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-3);
+  overflow: hidden;
+  animation: sheet-up 0.34s var(--ease) both;
+}
+
+.ms::backdrop {
+  background: rgb(6 10 13 / 48%);
+  backdrop-filter: blur(3px);
+  animation: fade-in 0.28s var(--ease) both;
+}
+
+@keyframes sheet-up { from { translate: 0 100%; } to { translate: 0 0; } }
+@keyframes fade-in  { from { opacity: 0; } to { opacity: 1; } }
+
+.ms-grabber {
+  width: 38px; height: 4px;
+  margin: 9px auto 0;
+  border-radius: 999px;
+  background: var(--rule-strong);
+}
+
+.ms-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4) var(--sp-3);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--rule);
+}
+.ms-title { font-size: var(--step-2); margin-top: 2px; }
+
+.ms-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-4) var(--sp-4) var(--sp-7);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  max-height: calc(92dvh - 92px);
+}
+
+.ms-loading, .ms-empty { padding: var(--sp-6) 0; text-align: center; color: var(--muted); }
+.ms-lede { font-size: var(--step-0); line-height: 1.6; color: var(--ink-2); }
+
+.ms-sec { display: flex; flex-direction: column; gap: var(--sp-3); }
+.ms-sec__title {
+  font-size: var(--step--2);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ms-sec--method {
+  padding: var(--sp-4);
+  background: var(--accent-soft);
+  border-radius: 14px;
+}
+.ms-sec--method .ms-sec__title { color: var(--accent); }
+
+.ms-prose { display: flex; flex-direction: column; gap: var(--sp-2); }
+.ms-prose p { font-size: var(--step-0); line-height: 1.62; }
+
+.ms-list { display: flex; flex-direction: column; gap: var(--sp-2); padding: 0; list-style: none; }
+.ms-list li {
+  position: relative;
+  padding-left: var(--sp-5);
+  font-size: var(--step-0);
+  line-height: 1.55;
+}
+.ms-list li::before {
+  content: '';
+  position: absolute;
+  left: 4px; top: 0.62em;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--rule-strong);
+}
+.ms-list--good li::before { background: var(--good); }
+.ms-list--bad  li::before { background: var(--danger); }
+
+.ms-res { display: flex; flex-direction: column; gap: var(--sp-3); }
+
+.ms-copyrow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  background: var(--surface-2);
+  border-radius: 12px;
+  flex-wrap: wrap;
+}
+.ms-copyrow__label {
+  font-size: var(--step--2);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.ms-copyrow > div:first-child { flex: 1 1 220px; min-width: 0; }
+.ms-copyrow .btn { flex: none; }
+
+.ms-code {
+  display: block;
+  font-family: var(--font-num);
+  font-size: var(--step--1);
+  line-height: 1.5;
+  color: var(--ink-2);
+  word-break: break-word;
+}
+.ms-code--long {
+  max-height: 7.5em;
+  overflow-y: auto;
+  padding-right: var(--sp-2);
+}
+
+.copy-btn.is-copied {
+  background: var(--good-soft);
+  border-color: var(--good);
+  color: var(--good);
+}
+
+@media (min-width: 700px) {
+  .ms {
+    margin: auto;
+    border-radius: 20px;
+    max-height: 86dvh;
+    animation: sheet-in 0.3s var(--ease) both;
+  }
+  .ms-body { max-height: calc(86dvh - 96px); padding-inline: var(--sp-5); }
+  .ms-grabber { display: none; }
+  @keyframes sheet-in {
+    from { opacity: 0; scale: 0.97; translate: 0 10px; }
+    to   { opacity: 1; scale: 1; translate: 0 0; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ms, .ms::backdrop { animation: none; }
+}
