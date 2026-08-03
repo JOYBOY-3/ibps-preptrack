@@ -652,3 +652,191 @@
 }
 
 .wk-nav { display: flex; gap: var(--sp-2); justify-content: space-between; flex-wrap: wrap; }
+
+/* ============================================================================
+   iOS-style grouped inset lists + premium motion.
+   Depth comes from layered translucency and hairlines, not from heavy borders;
+   feedback comes from a small scale on press, which is what makes a tap feel
+   physical rather than merely registered.
+   ========================================================================== */
+
+:root {
+  --spring: linear(0, 0.006, 0.025 2.8%, 0.101 6.1%, 0.539 18.9%, 0.721 25.3%,
+                   0.849 31.5%, 0.937 38.1%, 0.968 41.8%, 0.991 45.7%, 1.006 50.1%,
+                   1.015 60.2%, 1.006 80.2%, 1);
+  --hairline: color-mix(in srgb, var(--rule) 88%, transparent);
+}
+
+.ios-section { display: flex; flex-direction: column; gap: var(--sp-2); }
+
+.ios-section__title {
+  padding-inline: var(--sp-1);
+  font-size: var(--step--2);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ios-section__note {
+  padding-inline: var(--sp-1);
+  font-size: var(--step--1);
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.ios-group {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-1);
+}
+.ios-group--hero { padding: var(--sp-4); }
+
+.ios-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-height: 56px;
+  padding: var(--sp-3) var(--sp-4);
+  position: relative;
+  transition: background 0.16s var(--ease);
+}
+
+/* Hairline inset from the left, the way iOS insets separators past the label. */
+.ios-row + .ios-row::before {
+  content: '';
+  position: absolute;
+  top: 0; left: var(--sp-4); right: 0;
+  height: 1px;
+  background: var(--hairline);
+}
+
+.ios-row__text  { flex: 1; min-width: 0; }
+.ios-row__label { font-weight: 600; letter-spacing: var(--tracking-snug); }
+.ios-row__desc  { margin-top: 2px; font-size: var(--step--1); line-height: 1.4; color: var(--muted); }
+.ios-row__control { flex: none; }
+.ios-value { font-family: var(--font-num); font-weight: 600; color: var(--muted); }
+
+/* ---------------------------------------------------------------- sync hero */
+.sync-hero { display: flex; flex-direction: column; gap: var(--sp-3); }
+.sync-hero__top { display: flex; align-items: center; gap: var(--sp-3); }
+
+.sync-hero__avatar {
+  display: grid;
+  place-items: center;
+  width: 42px; height: 42px;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(145deg, var(--accent), color-mix(in srgb, var(--accent) 65%, #000));
+  color: var(--accent-ink);
+  font-weight: 800;
+  font-size: var(--step-1);
+}
+.sync-hero__avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.sync-hero__who  { flex: 1; min-width: 0; }
+.sync-hero__name { font-weight: 700; letter-spacing: var(--tracking-snug); }
+.sync-hero__mail {
+  font-size: var(--step--1);
+  color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sync-hero__msg { font-size: var(--step--1); line-height: 1.45; color: var(--muted); }
+.sync-hero__actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.sync-hero__actions .btn { flex: 1; min-width: 150px; }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--neutral-soft);
+  color: var(--muted);
+  font-size: var(--step--2);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.status-pill__dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.status-pill--good   { background: var(--good-soft);   color: var(--good); }
+.status-pill--accent { background: var(--accent-soft); color: var(--accent); }
+.status-pill--warn   { background: var(--warn-soft);   color: var(--warn); }
+.status-pill--danger { background: var(--danger-soft); color: var(--danger); }
+.status-pill--accent .status-pill__dot { animation: pip-pulse 1.1s var(--ease) infinite; }
+
+/* ---------------------------------------------------------------- advanced */
+.ios-advanced summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-3) var(--sp-1);
+  cursor: pointer;
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--muted);
+  list-style: none;
+}
+.ios-advanced summary::-webkit-details-marker { display: none; }
+.ios-advanced summary .icon { width: 15px; height: 15px; transition: rotate 0.22s var(--ease); }
+.ios-advanced[open] summary .icon { rotate: 90deg; }
+
+/* ---------------------------------------------------------------- press feedback
+   A tap should feel physical. 0.97 is enough to register and small enough never
+   to look like a bounce; the spring curve stops it feeling mechanical. */
+@media (hover: none) {
+  .block-card:active, .wk-card:active, .ios-group:active { scale: 0.995; }
+}
+
+.btn { transition: background 0.15s var(--ease), border-color 0.15s var(--ease),
+                   color 0.15s var(--ease), scale 0.18s var(--spring), box-shadow 0.18s var(--ease); }
+.btn:active:not(:disabled) { scale: 0.97; translate: none; }
+
+.nav-item:active { scale: 0.94; }
+.icon-btn:active, .nav-toggle:active { scale: 0.9; }
+.chip { transition: background 0.16s var(--ease); }
+
+/* Entry animation without JS. Progressive: browsers without @starting-style
+   simply render the final state. */
+@supports (transition-behavior: allow-discrete) {
+  .view > * {
+    transition: opacity 0.32s var(--ease), translate 0.32s var(--ease);
+  }
+  @starting-style {
+    .view > * { opacity: 0; translate: 0 8px; }
+  }
+}
+
+/* Stagger the block list so the day reads as a sequence, not a dump. */
+.block-list > .block-card { animation: card-in 0.34s var(--ease) both; }
+.block-list > .block-card:nth-child(1) { animation-delay: 0.02s; }
+.block-list > .block-card:nth-child(2) { animation-delay: 0.05s; }
+.block-list > .block-card:nth-child(3) { animation-delay: 0.08s; }
+.block-list > .block-card:nth-child(4) { animation-delay: 0.11s; }
+.block-list > .block-card:nth-child(5) { animation-delay: 0.14s; }
+.block-list > .block-card:nth-child(6) { animation-delay: 0.17s; }
+
+@keyframes card-in {
+  from { opacity: 0; translate: 0 10px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+
+/* The completion moment: earned, not childish. A single settle, no confetti. */
+.block-card.is-done .btn--done { animation: settle 0.42s var(--spring) both; }
+@keyframes settle {
+  0%   { scale: 1; }
+  38%  { scale: 1.045; }
+  100% { scale: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .block-list > .block-card,
+  .block-card.is-done .btn--done { animation: none; }
+  .btn:active:not(:disabled), .nav-item:active,
+  .icon-btn:active, .nav-toggle:active { scale: 1; }
+}

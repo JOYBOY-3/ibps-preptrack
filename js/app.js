@@ -10,7 +10,7 @@ import { applyTheme, toast } from './utils/ui.js';
 import { icon } from './components/icons.js';
 import { getState, subscribe } from './state/store.js';
 import { requestPersistence } from './state/persist.js';
-import { currentDayNumber, needsBackupWarning } from './state/selectors.js';
+import { currentDayNumber } from './state/selectors.js';
 import { todayView, setViewedDay } from './views/today.js';
 import { planView } from './views/plan.js';
 import { progressView } from './views/progress.js';
@@ -18,7 +18,7 @@ import { settingsView } from './views/settings.js';
 import { weekView } from './views/week.js';
 import { gateView } from './views/gate.js';
 import { hasSignedInBefore, initAuth } from './sync/googleAuth.js';
-import { initSyncListeners, markDirty, syncOnGesture, isConnected, onSyncStatus } from './sync/syncEngine.js';
+import { initSyncListeners, markDirty, syncOnGesture, onSyncStatus } from './sync/syncEngine.js';
 
 const ROUTES = [
   { id: 'today',    path: '#/today',    label: 'Today',    icon: 'today',    render: todayView },
@@ -162,11 +162,6 @@ function bootApp() {
   document.addEventListener('pointerup', syncOnGesture, { passive: true });
   initSyncListeners();
   initAuth();
-
-  // Backup nudge — only when sync is NOT carrying the safety net.
-  if (!isConnected() && needsBackupWarning(state)) {
-    setTimeout(() => toast('No recent backup — export from Settings', 'danger'), 1500);
-  }
 
   requestPersistence();
 

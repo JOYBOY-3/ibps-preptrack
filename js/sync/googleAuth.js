@@ -98,22 +98,38 @@ export function getToken() {
  * this rejects with 'popup_failed_to_open'. Returns the cached token when it is
  * still fresh, so most calls cost nothing.
  */
+const TOKEN_TIMEOUT_MS = 60_000;
+
 export function acquireToken() {
   if (hasFreshToken()) return Promise.resolve(accessToken);
   if (!tokenClient) return Promise.reject(new Error('auth_unavailable'));
 
   return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = fn => (...args) => { if (!settled) { settled = true; clearTimeout(timer); fn(...args); } };
+    const ok = finish(resolve);
+    const bad = finish(reject);
+
+    /**
+     * Hard timeout. Chrome's Cross-Origin-Opener-Policy can stop GIS from ever
+     * observing that its popup closed, in which case neither callback fires and
+     * this promise hangs forever — which used to wedge the whole sync engine at
+     * "Syncing…" permanently, because the in-flight promise never settled.
+     */
+    const timer = setTimeout(() => bad(new Error('auth_timeout')), TOKEN_TIMEOUT_MS);
+
     tokenClient.callback = resp => {
-      if (resp.error) return reject(new Error(resp.error));
+      if (resp.error) return bad(new Error(resp.error));
       accessToken = resp.access_token;
       expiresAt = Date.now() + Number(resp.expires_in || 3600) * 1000;
-      resolve(accessToken);
+      ok(accessToken);
     };
-    tokenClient.error_callback = err => reject(new Error(err?.type || 'popup_closed'));
+    tokenClient.error_callback = err => bad(new Error(err?.type || 'popup_closed'));
+
     try {
       tokenClient.requestAccessToken({ prompt: '' });
     } catch (err) {
-      reject(err);
+      bad(err);
     }
   });
 }

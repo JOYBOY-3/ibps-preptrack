@@ -41,16 +41,40 @@ const REASON_MESSAGE = {
 
 const RETRYABLE = new Set(['rateLimitExceeded', 'userRateLimitExceeded', 'backendError', 'internalError']);
 
+const REQUEST_TIMEOUT_MS = 25_000;
+
 async function drive(token, url, opts = {}) {
-  const res = await fetch(String(url), {
-    ...opts,
-    headers: { Authorization: `Bearer ${token}`, ...(opts.headers || {}) }
-  });
+  // Every request is time-boxed. A request that never settles would leave the sync
+  // engine's in-flight promise pending forever and wedge it at "Syncing…".
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS);
+
+  let res;
+  try {
+    res = await fetch(String(url), {
+      ...opts,
+      signal: ctrl.signal,
+      headers: { Authorization: `Bearer ${token}`, ...(opts.headers || {}) }
+    });
+  } catch (err) {
+    throw Object.assign(
+      new Error(err?.name === 'AbortError' ? 'network_timeout' : 'network_error'),
+      { retryable: true, userMessage: 'Could not reach Google Drive. Will retry.' }
+    );
+  } finally {
+    clearTimeout(timer);
+  }
 
   if (res.ok) return res;
 
   if (res.status === 401) {
     throw Object.assign(new Error('token_expired'), { status: 401, retryable: true });
+  }
+
+  // 404 on the state file is normal (first run, or the file was removed from Drive).
+  // It is handled by the caller and must not be logged as an error.
+  if (res.status === 404) {
+    throw Object.assign(new Error('not_found'), { status: 404, expected: true });
   }
 
   // Read the real reason out of the body before deciding what happened.
@@ -72,7 +96,7 @@ async function drive(token, url, opts = {}) {
   err.userMessage = REASON_MESSAGE[reason] || `Drive request failed (HTTP ${res.status}). ${detail}`.trim();
   err.retryable = RETRYABLE.has(reason) || res.status === 429 || res.status >= 500;
 
-  console.error('[preptrack] Drive error', { status: res.status, reason, detail });
+  if (!err.expected) console.error('[preptrack] Drive error', { status: res.status, reason, detail });
   throw err;
 }
 

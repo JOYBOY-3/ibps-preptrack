@@ -1,30 +1,98 @@
-/** Settings — theme, backup, restore, reset. Backup is a v1 feature by design. */
+/**
+ * Settings — iOS-style grouped inset lists.
+ *
+ * Google Drive is the story. localStorage still exists underneath as the offline
+ * cache (without it the app could not open on a train), but the user is never asked
+ * to manage it and is never nagged about backups. Export/import survive under
+ * Advanced as an escape hatch, not as a chore.
+ */
 
 import { el } from '../utils/dom.js';
 import { icon } from '../components/icons.js';
 import { getState, replaceState } from '../state/store.js';
-import { setTheme, markBackedUp } from '../state/actions.js';
+import { setTheme } from '../state/actions.js';
 import { exportJSON, importJSON, clearAll, freshState, storageBytes } from '../state/persist.js';
-import { daysSinceBackup, completedDayCount, totalQuestions } from '../state/selectors.js';
+import { completedDayCount, totalQuestions } from '../state/selectors.js';
 import { applyTheme, toast } from '../utils/ui.js';
 import { getIdentity, signOut, signIn, explainAuthError } from '../sync/googleAuth.js';
 import { sync, getSyncStatus, isConnected, connect, disconnectSync } from '../sync/syncEngine.js';
 
-function row(title, desc, control) {
-  return el('div.setting-row', {}, [
-    el('div.setting-row__text', {}, [
-      el('div.setting-row__title', { text: title }),
-      el('div.setting-row__desc', { text: desc })
-    ]),
-    control
+function group(title, rows, footnote) {
+  return el('section.ios-section', {}, [
+    title ? el('h2.ios-section__title', { text: title }) : null,
+    el('div.ios-group', {}, rows.filter(Boolean)),
+    footnote ? el('p.ios-section__note', { text: footnote }) : null
   ]);
 }
 
+function row(label, desc, control, mod = '') {
+  return el(`div.ios-row${mod}`, {}, [
+    el('div.ios-row__text', {}, [
+      el('div.ios-row__label', { text: label }),
+      desc ? el('div.ios-row__desc', { text: desc }) : null
+    ]),
+    control ? el('div.ios-row__control', {}, [control]) : null
+  ]);
+}
+
+const STATUS_META = {
+  synced:       ['good',   'Up to date'],
+  syncing:      ['accent', 'Syncing…'],
+  offline:      ['warn',   'Offline'],
+  pending:      ['warn',   'Waiting'],
+  error:        ['danger', 'Problem'],
+  disconnected: ['',       'Not connected'],
+  idle:         ['',       'Idle']
+};
+
 export function settingsView() {
   const state = getState();
-  const since = daysSinceBackup(state);
-  const kb = (storageBytes() / 1024).toFixed(1);
+  const identity = getIdentity();
+  const st = getSyncStatus();
+  const connected = isConnected();
+  const [tone, label] = STATUS_META[st.state] || STATUS_META.idle;
 
+  // ---------------------------------------------------------------- sync
+  const syncHero = el('div.sync-hero', {}, [
+    el('div.sync-hero__top', {}, [
+      el('div.sync-hero__avatar', {}, [
+        identity?.picture
+          ? el('img', { src: identity.picture, alt: '', referrerpolicy: 'no-referrer' })
+          : el('span', { text: (identity?.name || identity?.email || '?').slice(0, 1).toUpperCase() })
+      ]),
+      el('div.sync-hero__who', {}, [
+        el('div.sync-hero__name', { text: identity?.name || 'Signed in' }),
+        identity?.email ? el('div.sync-hero__mail', { text: identity.email }) : null
+      ]),
+      el(`span.status-pill${tone ? '.status-pill--' + tone : ''}`, {}, [
+        el('span.status-pill__dot'),
+        el('span', { text: label })
+      ])
+    ]),
+    el('p.sync-hero__msg', {
+      text: st.message ||
+        'Everything you tick is saved to a private folder in your Google Drive and follows you to every device.'
+    }),
+    el('div.sync-hero__actions', {}, [
+      connected
+        ? el('button.btn.btn--primary', {
+            type: 'button',
+            onclick: async () => {
+              const r = await sync({ interactive: true });
+              toast(r ? 'Synced' : (getSyncStatus().message || 'Sync did not complete'), r ? '' : 'danger');
+            }
+          }, [icon('refresh'), 'Sync now'])
+        : el('button.btn.btn--primary', {
+            type: 'button',
+            onclick: async () => {
+              try { await signIn(); await connect(); toast('Connected to Google Drive'); }
+              catch (err) { toast(explainAuthError(err), 'danger'); }
+            }
+          }, [icon('upload'), 'Connect Google Drive'])
+    ])
+  ]);
+
+  // ---------------------------------------------------------------- theme
   const themeSeg = el('div.seg', { role: 'group', 'aria-label': 'Theme' },
     ['auto', 'light', 'dark'].map(t => el('button', {
       type: 'button',
@@ -33,6 +101,7 @@ export function settingsView() {
       text: t[0].toUpperCase() + t.slice(1)
     })));
 
+  // ---------------------------------------------------------------- advanced
   const fileInput = el('input', {
     type: 'file', accept: 'application/json', class: 'sr-only', id: 'import-file',
     onchange: async e => {
@@ -40,165 +109,80 @@ export function settingsView() {
       if (!file) return;
       try {
         const next = await importJSON(file);
-        if (!confirm('Replace all current progress with this backup? This cannot be undone.')) return;
+        if (!confirm('Replace all current progress with this file? This cannot be undone.')) return;
         replaceState(next);
-        toast('Backup restored');
-      } catch (err) {
-        toast(err.message, 'danger');
-      } finally {
-        e.target.value = '';
-      }
+        toast('Progress restored');
+      } catch (err) { toast(err.message, 'danger'); }
+      finally { e.target.value = ''; }
     }
   });
 
-  const backupBanner = (since === null || since >= 7)
-    ? el('div.banner.banner--warn', {}, [icon('alert', 'banner__icon'), el('div', {}, [
-        el('strong', { text: since === null ? 'You have never backed up. ' : `Last backup ${since} days ago. ` }),
-        'localStorage is wiped by clearing browsing data. Export now — it takes one tap.'
-      ])])
-    : null;
-
-  // ---------------------------------------------------------------- sync card
-  const identity = getIdentity();
-  const st = getSyncStatus();
-  const connected = isConnected();
-
-  const STATUS_CHIP = {
-    synced: ['chip--good', 'Synced'],
-    syncing: ['chip--accent', 'Syncing…'],
-    offline: ['chip--warn', 'Offline'],
-    pending: ['chip--warn', 'Pending'],
-    error: ['chip--danger', 'Error'],
-    disconnected: ['chip', 'Not connected'],
-    idle: ['chip', 'Idle']
-  };
-  const [chipClass, chipText] = STATUS_CHIP[st.state] || STATUS_CHIP.idle;
-
-  const syncCard = el('section.card', {}, [
-    el('div.card__body', {}, [
-      el('div.section-head', {}, [
-        el('span.eyebrow', { text: 'Google Drive sync' }),
-        el(`span.${chipClass.startsWith('chip') ? chipClass : 'chip'}`, { text: chipText })
-      ]),
-      identity
-        ? el('div.identity', { style: 'margin-top:var(--sp-3)' }, [
-            el('div', {}, [
-              el('div.setting-row__title', { text: identity.name || identity.email || 'Signed in' }),
-              identity.email && identity.name
-                ? el('div.setting-row__desc', { text: identity.email })
-                : null
-            ])
-          ])
-        : null,
-      el('p.setting-row__desc', { style: 'margin-top:var(--sp-2)', text: st.message ||
-          'Your progress is stored in a hidden folder in your own Google Drive that only this app can see.' }),
-      el('div', { style: 'display:flex;gap:var(--sp-2);flex-wrap:wrap;margin-top:var(--sp-4)' }, [
-        connected
-          ? el('button.btn.btn--primary', {
-              type: 'button',
-              onclick: async () => {
-                const r = await sync({ interactive: true });
-                toast(r ? 'Synced to Google Drive' : (getSyncStatus().message || 'Sync did not complete'),
-                      r ? '' : 'danger');
-              }
-            }, [icon('refresh'), 'Sync now'])
-          : el('button.btn.btn--primary', {
-              type: 'button',
-              onclick: async () => {
-                try { await signIn(); await connect(); toast('Connected to Google Drive'); }
-                catch (err) { toast(explainAuthError(err), 'danger'); }
-              }
-            }, [icon('upload'), 'Connect Google Drive']),
-        connected
-          ? el('button.btn', {
-              type: 'button',
-              onclick: () => {
-                if (!confirm('Stop syncing to Google Drive? Your data stays on this device.')) return;
-                disconnectSync();
-                toast('Sync disconnected');
-              }
-            }, ['Disconnect'])
-          : null,
-        identity
-          ? el('button.btn.btn--danger', {
-              type: 'button',
-              onclick: () => {
-                if (!confirm('Sign out? You will need to sign in again to use PrepTrack on this device.')) return;
-                disconnectSync();
-                signOut();
-                location.reload();
-              }
-            }, ['Sign out'])
-          : null
-      ])
+  const advanced = el('details.ios-advanced', {}, [
+    el('summary', {}, [el('span', { text: 'Advanced' }), icon('plan')]),
+    el('div.ios-group', {}, [
+      row('Download a copy', 'A JSON file of everything, in case you ever want it outside Drive.',
+        el('button.btn.btn--sm', { type: 'button', onclick: () => { exportJSON(getState()); toast('Downloaded'); } },
+          [icon('download'), 'Export'])),
+      row('Restore from a file', 'Replaces everything currently on this device.',
+        el('div', {}, [fileInput,
+          el('button.btn.btn--sm', { type: 'button', onclick: () => document.getElementById('import-file').click() },
+            [icon('upload'), 'Import'])])),
+      row('Reset this device', 'Clears local progress. Drive is untouched until the next sync.',
+        el('button.btn.btn--sm.btn--danger', {
+          type: 'button',
+          onclick: () => {
+            if (!confirm('Clear all progress on this device?')) return;
+            if (!confirm('Really sure? This cannot be undone.')) return;
+            clearAll(); replaceState(freshState()); toast('Cleared');
+          }
+        }, ['Reset']))
     ])
   ]);
 
+  // ---------------------------------------------------------------- account
+  const accountRows = [
+    connected
+      ? row('Stop syncing', 'Keeps everything on this device, stops writing to Drive.',
+          el('button.btn.btn--sm', {
+            type: 'button',
+            onclick: () => {
+              if (!confirm('Stop syncing to Google Drive?')) return;
+              disconnectSync(); toast('Sync stopped');
+            }
+          }, ['Disconnect']))
+      : null,
+    identity
+      ? row('Sign out', 'You will need to sign in again to use PrepTrack here.',
+          el('button.btn.btn--sm.btn--danger', {
+            type: 'button',
+            onclick: () => {
+              if (!confirm('Sign out of PrepTrack?')) return;
+              disconnectSync(); signOut(); location.reload();
+            }
+          }, ['Sign out']))
+      : null
+  ];
+
   return el('div.view', {}, [
     el('div.section-head', {}, [el('h1', { text: 'Settings' })]),
-    backupBanner,
-    syncCard,
 
-    el('section.card', {}, [
-      row('Theme', 'Auto follows your device. Manual overrides it in both directions.', themeSeg),
-
-      row('Export backup',
-        'Downloads a JSON file with every day, topic, mock and error. Keep it somewhere safe.',
-        el('button.btn.btn--primary', {
-          type: 'button',
-          onclick: () => { exportJSON(getState()); markBackedUp(); toast('Backup downloaded'); }
-        }, [icon('download'), 'Export'])),
-
-      row('Restore from backup',
-        'Replaces all current progress with the contents of a backup file.',
-        el('div', {}, [
-          fileInput,
-          el('button.btn', {
-            type: 'button',
-            onclick: () => document.getElementById('import-file').click()
-          }, [icon('upload'), 'Import'])
-        ])),
-
-      row('Reset everything',
-        'Deletes all progress permanently. The curriculum itself is untouched.',
-        el('button.btn.btn--danger', {
-          type: 'button',
-          onclick: () => {
-            if (!confirm('Delete ALL progress? This cannot be undone.')) return;
-            if (!confirm('Really sure? Export a backup first if you have any doubt.')) return;
-            clearAll();
-            replaceState(freshState());
-            toast('All progress cleared');
-          }
-        }, [icon('refresh'), 'Reset']))
+    el('section.ios-section', {}, [
+      el('h2.ios-section__title', { text: 'Google Drive' }),
+      el('div.ios-group.ios-group--hero', {}, [syncHero])
     ]),
 
-    el('section.card', {}, [
-      el('div.card__body', {}, [
-        el('span.eyebrow', { text: 'Storage' }),
-        el('div.stat-grid', { style: 'margin-top:var(--sp-3)' }, [
-          el('div.stat', {}, [
-            el('span.stat-value', { text: `${kb} KB` }),
-            el('span.stat-label', { text: 'used of ~5 MB' })
-          ]),
-          el('div.stat', {}, [
-            el('span.stat-value', { text: String(completedDayCount(state)) }),
-            el('span.stat-label', { text: 'days complete' })
-          ]),
-          el('div.stat', {}, [
-            el('span.stat-value', { text: String(totalQuestions(state)) }),
-            el('span.stat-label', { text: 'questions solved' })
-          ]),
-          el('div.stat', {}, [
-            el('span.stat-value', { text: since === null ? '—' : `${since}d` }),
-            el('span.stat-label', { text: 'since backup' })
-          ])
-        ])
-      ])
+    group('Appearance', [
+      row('Theme', 'Auto follows your device.', themeSeg)
     ]),
 
-    el('p.muted', { style: 'font-size:var(--step--1);line-height:1.6',
-      text: 'PrepTrack stores everything in this browser only. Nothing is uploaded anywhere. ' +
-            'That means it works offline — and it also means an export is your only safety net.' })
+    group('This device', [
+      row('Days completed', null, el('span.ios-value', { text: String(completedDayCount(state)) })),
+      row('Questions solved', null, el('span.ios-value', { text: String(totalQuestions(state)) })),
+      row('Cached offline', null, el('span.ios-value', { text: `${(storageBytes() / 1024).toFixed(0)} KB` }))
+    ], 'A copy is kept on this device so PrepTrack opens instantly and works with no signal.'),
+
+    accountRows.some(Boolean) ? group('Account', accountRows) : null,
+
+    advanced
   ]);
 }

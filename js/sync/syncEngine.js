@@ -25,6 +25,7 @@ let status = { state: 'idle', message: '', at: null, error: null };
 let dirty = false;
 let pushTimer = null;
 let inFlight = null;
+let inFlightSince = 0;
 
 export function onSyncStatus(fn) {
   listeners.add(fn);
@@ -67,8 +68,15 @@ function writeSyncMeta(patch) {
  * @param {boolean} opts.interactive  true when called from a user gesture — only
  *                                    then may we open the Google popup.
  */
+const SYNC_TIMEOUT_MS = 90_000;
+
 export async function sync({ interactive = false } = {}) {
-  if (inFlight) return inFlight;
+  // If a previous attempt has been in flight implausibly long, abandon it rather
+  // than returning the same wedged promise to every later caller.
+  if (inFlight) {
+    if (Date.now() - inFlightSince < SYNC_TIMEOUT_MS) return inFlight;
+    inFlight = null;
+  }
 
   if (!navigator.onLine) {
     setStatus('offline', 'Offline — changes are saved on this device and will sync later.');
@@ -79,6 +87,7 @@ export async function sync({ interactive = false } = {}) {
     return null;
   }
 
+  inFlightSince = Date.now();
   inFlight = (async () => {
     try {
       setStatus('syncing', 'Syncing…');
@@ -108,7 +117,15 @@ export async function sync({ interactive = false } = {}) {
         } catch (err) {
           // A missing or unreadable remote must never destroy local work.
           if (err.status !== 404) throw err;
+          // The cached id is stale — clear it now, or every future sync repeats
+          // this same 404 against a file that no longer exists.
           fileId = null;
+          writeSyncMeta({ fileId: null });
+          const found = await findStateFile(token).catch(() => null);
+          if (found?.id) {
+            fileId = found.id;
+            remote = await downloadState(token, fileId).catch(() => null);
+          }
         }
         if (remote && typeof remote === 'object' && remote.days) {
           merged = mergeStates(local, remote);
@@ -136,7 +153,9 @@ export async function sync({ interactive = false } = {}) {
       return uploaded;
     } catch (err) {
       const msg = String(err?.message || err);
-      if (msg === 'token_expired' || msg === 'popup_closed' || msg === 'popup_failed_to_open') {
+      if (msg === 'auth_timeout') {
+        setStatus('pending', 'Google sign-in did not respond. Tap Sync now to retry.', msg);
+      } else if (msg === 'token_expired' || msg === 'popup_closed' || msg === 'popup_failed_to_open') {
         setStatus('pending', 'Sync needs you to reconnect. Open Settings and tap Sync now.', msg);
       } else if (err?.retryable) {
         setStatus('pending', err.userMessage || 'Temporary Google error. Will retry shortly.', msg);
