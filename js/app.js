@@ -11,6 +11,7 @@ import { icon } from './components/icons.js';
 import { getState, subscribe } from './state/store.js';
 import { requestPersistence } from './state/persist.js';
 import { currentDayNumber } from './state/selectors.js';
+import { KEY_DATES } from './data/phases.js';
 import { todayView, setViewedDay } from './views/today.js';
 import { planView } from './views/plan.js';
 import { progressView } from './views/progress.js';
@@ -20,8 +21,9 @@ import { mocksView } from './views/mocks.js';
 import { gateView } from './views/gate.js';
 import { hasSignedInBefore, initAuth } from './sync/googleAuth.js';
 import { initSyncListeners, markDirty, syncOnGesture, onSyncStatus } from './sync/syncEngine.js';
+import { advanceStaleRevisions, scheduleExamSweep } from './state/actions.js';
 
-export const BUILD = 'v12';
+export const BUILD = 'v13';
 
 const ROUTES = [
   { id: 'today',    path: '#/today',    label: 'Today',    icon: 'today',    render: todayView },
@@ -189,6 +191,16 @@ function bootApp() {
   document.addEventListener('pointerup', syncOnGesture, { passive: true });
   initSyncListeners();
   initAuth();
+
+  // Anything more than a week overdue is advanced past, once per launch. Without
+  // this, three missed days in November leave 40 items permanently "due" and the
+  // queue becomes a guilt meter instead of a study tool.
+  advanceStaleRevisions();
+
+  // Anchored to YOUR Mains date if you have set one, else the plan's assumed date.
+  const mainsDate = getState().settings?.examDates?.mains
+    || KEY_DATES.find(k => k.id === 'mains')?.date;
+  scheduleExamSweep(mainsDate);
 
   requestPersistence();
 

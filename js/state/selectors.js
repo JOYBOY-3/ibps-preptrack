@@ -80,8 +80,14 @@ export function dueRevisions(state, onDate = todayISO(), limit = REVISION_QUEUE_
       }
     }
   }
-  const weight = r => (r.topic?.prelimsWeight || 0) + (r.topic?.mainsWeight || 0);
-  out.sort((a, b) => (weight(b) - weight(a)) || a.due.localeCompare(b.due));
+  // Rank by what forgetting COSTS: a topic's exam weight multiplied by how long
+  // it has been slipping. Weight alone starves the cheap Mains-only topics
+  // (Machine I/O, Data Sufficiency) that a solo candidate can win marks on.
+  const daysOverdue = r => Math.max(0, Math.round(
+    (new Date(onDate) - new Date(r.due)) / 86400000));
+  const value = r => ((r.topic?.prelimsWeight || 0) + (r.topic?.mainsWeight || 0) + 1)
+                     * (1 + Math.min(daysOverdue(r), 14) / 7);
+  out.sort((a, b) => (value(b) - value(a)) || a.due.localeCompare(b.due));
   const shown = out.slice(0, limit);
   shown.overdueTotal = out.length;
   return shown;

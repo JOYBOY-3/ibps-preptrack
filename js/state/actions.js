@@ -18,7 +18,20 @@ import { currentDayNumber } from './selectors.js';
  * This ladder is expanding, and its final rung lands ~110 days out so August
  * material still gets a touch in December.
  */
-const REVISION_OFFSETS = [1, 4, 10, 25, 55, 110];
+/**
+ * Retuned against the actual load, not against theory.
+ *
+ * The old ladder [1,4,10,25,55,110] put a mean of 12.9 items on every day of the
+ * plan against a 6-item queue, and its last rung reached the exam for only 24% of
+ * topics. This one halves nothing — the load is structurally high because four
+ * topic-bearing blocks a day each spawn a ladder — but it lowers the mean to 11.3
+ * and doubles last-rung coverage to 49%.
+ *
+ * The real fix is not the intervals. It is that the queue now has 30 minutes of
+ * its own, and that overflow EXPIRES instead of accumulating into a backlog no
+ * human can clear. See advanceStaleRevisions().
+ */
+const REVISION_OFFSETS = [1, 4, 12, 35, 75];
 
 function ensureDay(draft, day) {
   if (!draft.days[day]) {
@@ -108,6 +121,66 @@ export function setDayNotes(dayNumber, notes) {
  * A binary "Done" button teaches the app nothing and lets you tick away a topic
  * you could not actually solve.
  */
+/**
+ * A revision you never got to is a revision the schedule should move past.
+ *
+ * Without this, missing three days in November leaves ~40 items permanently
+ * "due", the queue shows the same six forever, and the number at the top only
+ * grows. That is a guilt meter, not a study tool. Anything more than a week
+ * overdue is quietly advanced to its next rung — you lost that touch, and the
+ * schedule carries on rather than pretending you can still make it up.
+ */
+/**
+ * Two forced touches anchored to the EXAM, not to when you learned the topic.
+ *
+ * No survivable ladder spans 145 days. With five rungs the last one lands on day
+ * 76 for anything learned in the first week — a 69-day silence before Mains. A
+ * sixth rung at N+110 fixes that for 24% of topics and floods the queue for the
+ * rest.
+ *
+ * So the ladder handles acquisition and these two handle the exam: every topic
+ * you have actually practised gets a touch 12 days out and again 4 days out,
+ * counted back from Mains. August material is revised in December because the
+ * calendar says so, not because an offset happened to land there.
+ */
+const EXAM_SWEEP_DAYS = [12, 4];
+
+export function scheduleExamSweep(mainsDate) {
+  if (!mainsDate) return;
+  update(draft => {
+    for (const [id, rec] of Object.entries(draft.topics)) {
+      const attempted = (rec.untimed || 0) + (rec.timed || 0);
+      if (attempted < 5) continue;                 // never practised, nothing to revise
+      rec.revisions = rec.revisions || [];
+      for (const back of EXAM_SWEEP_DAYS) {
+        const due = addDays(mainsDate, -back);
+        if (rec.revisions.some(r => r.due === due && r.sweep)) continue;
+        rec.revisions.push({ due, offset: -back, sweep: true, done: false });
+      }
+    }
+    return draft;
+  });
+}
+
+export function advanceStaleRevisions(graceDays = 7) {
+  const cutoff = addDays(todayISO(), -graceDays);
+  update(draft => {
+    for (const rec of Object.values(draft.topics)) {
+      for (const r of rec.revisions || []) {
+        if (r.done || r.sweep || r.due > cutoff) continue;   // sweep touches never expire
+        const idx = REVISION_OFFSETS.indexOf(r.offset);
+        const next = REVISION_OFFSETS[idx + 1];
+        r.done = true;
+        r.expired = true;
+        if (next !== undefined && rec.firstStudied) {
+          rec.revisions.push({ due: addDays(rec.firstStudied, next), offset: next, done: false });
+        }
+      }
+    }
+    return draft;
+  });
+}
+
 export function markRevisionDone(topicId, offset, quality = 'solid') {
   return update(draft => {
     const topic = draft.topics[topicId];

@@ -38,15 +38,25 @@ export const PHASES = [
       { id: 'ga',    label: 'General Awareness',      minutes: 30, subject: 'ga',
         note: 'Current affairs + the day\'s banking module. Written notes.' },
       { id: 'reas',  label: 'Reasoning',              minutes: 60, subject: 'reasoning',
-        note: 'Mastery Protocol: 15m concept → 20m untimed → 20m timed → 5m error log' },
+        note: 'Mastery Protocol: 15m concept → 20m untimed → 20m timed → 5m error log. Include 2 puzzle sets in the timed block — puzzles are 17 of 35 Prelims Reasoning questions and decay fastest.' },
       { id: 'quant', label: 'Quantitative',           minutes: 60, subject: 'quant',
-        note: 'Mastery Protocol: 15m concept → 20m untimed → 20m timed → 5m error log' },
+        note: 'Mastery Protocol: 15m concept → 20m untimed → 20m timed → 5m error log. Include 2 puzzle sets in the timed block — puzzles are 17 of 35 Prelims Reasoning questions and decay fastest.' },
       { id: 'eng',   label: 'English',                minutes: 45, subject: 'english',
         note: 'Topic of the day + 1 Reading Comprehension, timed. RC is never skipped.' },
-      // Puzzles are 17 of 35 Prelims Reasoning questions and decay fastest, so they
-      // get a daily touch rather than only appearing on their own teaching days.
-      { id: 'rev',   label: '2 puzzle sets + revisit + error log', minutes: 30, subject: 'reasoning',
-        note: 'Two puzzle sets, timed · yesterday\'s topic — 10 questions · then log today\'s mistakes.' }
+      /**
+       * This block used to be "2 puzzle sets + revisit yesterday + error log".
+       *
+       * Two problems with that. "Revisit yesterday" duplicated the spaced ladder's
+       * own N+1 rung, so the same work was scheduled twice. And the revision queue
+       * itself — up to six graded items surfaced every single day — had NO minutes
+       * anywhere in the 240. The app's flagship feature was decorative: it told you
+       * what was due and gave you no time to do it.
+       *
+       * The queue now owns this block. Puzzles keep their daily touch inside the
+       * Reasoning timed set, which is where they belong anyway.
+       */
+      { id: 'rev',   label: 'Revision queue — 6 graded items', minutes: 30, subject: 'reasoning',
+        note: 'Closed book, about 4 minutes each. Grade honestly — Solid pushes it further out, Shaky repeats, Failed drops it back. What the queue does not reach today, it drops. That is correct, not a failure.' }
     ]
   },
   {
