@@ -33,16 +33,27 @@ export const PHASES = [
     tagline: 'Cover the syllabus deeply. ~70% Prelims, ~30% Mains.',
     from: 1, to: 45,
     blocks: [
-      { id: 'calc',  label: 'Calculation drill',      minutes: 15, subject: 'quant',
+      { id: 'calc',  label: 'Calculation drill',      minutes: 10, subject: 'quant',
         note: 'Tables to 30 · squares to 40 · cubes to 20 · fraction↔% table' },
       { id: 'ga',    label: 'General Awareness',      minutes: 30, subject: 'ga',
-        note: 'Current affairs + the day\'s banking module. Written notes.' },
+        note: 'One third intake, two thirds CLOSED BOOK. Intake = cue-only notes: write the QUESTION, not the prose. Then shut the book and recall yesterday, 3 days ago and last week before checking. Reading is not revision; retrieval is.' },
       { id: 'reas',  label: 'Reasoning',              minutes: 60, subject: 'reasoning',
-        note: 'Mastery Protocol: 15m concept → 20m untimed → 20m timed → 5m error log. Include 2 puzzle sets in the timed block — puzzles are 17 of 35 Prelims Reasoning questions and decay fastest.' },
+        note: 'Mastery Protocol: 15m concept → 20m untimed → 20m timed → 5m error log. Include 2 puzzle sets in the timed block — puzzles are 17 of 35 Prelims Reasoning questions and decay fastest. The 20m timed set is UNLABELLED and MIXED: ~40% the new topic, ~60% earlier topics from this subject, shuffled. Naming the topic removes the step that actually fails in the exam — deciding which method this is. Your scores WILL drop for about three weeks. That is the change working.' },
       { id: 'quant', label: 'Quantitative',           minutes: 60, subject: 'quant',
-        note: 'Mastery Protocol: 15m concept → 20m untimed → 20m timed → 5m error log. Include 2 puzzle sets in the timed block — puzzles are 17 of 35 Prelims Reasoning questions and decay fastest.' },
-      { id: 'eng',   label: 'English',                minutes: 45, subject: 'english',
+        note: 'Mastery Protocol: 15m concept → 20m untimed → 20m timed → 5m error log. Include 2 puzzle sets in the timed block — puzzles are 17 of 35 Prelims Reasoning questions and decay fastest. The 20m timed set is UNLABELLED and MIXED: ~40% the new topic, ~60% earlier topics from this subject, shuffled. Naming the topic removes the step that actually fails in the exam — deciding which method this is. Your scores WILL drop for about three weeks. That is the change working.' },
+      { id: 'eng',   label: 'English',                minutes: 40, subject: 'english',
         note: 'Topic of the day + 1 Reading Comprehension, timed. RC is never skipped.' },
+      /**
+       * Data Interpretation gets a standing daily set from day 1.
+       *
+       * It is 20.1 of 40 Mains Quant questions — the largest block after Current
+       * Affairs — and it has DOUBLED in Prelims since 2021 (5 Q flat for five
+       * years, now 9-12). Puzzles had a daily touch and DI did not, which was
+       * indefensible. Funded by 5 minutes from the calculation drill and 5 from
+       * English, neither of which is near its ceiling.
+       */
+      { id: 'di',    label: 'DI set — one, timed',    minutes: 10, subject: 'quant',
+        note: 'One DI set daily, timed, whatever type you meet. Speed on DI is arithmetic under pressure, not new theory.' },
       /**
        * This block used to be "2 puzzle sets + revisit yesterday + error log".
        *
@@ -70,7 +81,7 @@ export const PHASES = [
       { id: 'anal',  label: 'Mock analysis',          minutes: 75, subject: null,
         note: 'Every question into one bucket: Concept / Slow / Silly / Selection.' },
       { id: 'ga',    label: 'General Awareness',      minutes: 30, subject: 'ga',
-        note: 'Continues untouched. It cannot be crammed later.' },
+        note: 'One third intake, two thirds CLOSED BOOK. Intake = cue-only notes: write the QUESTION, not the prose. Then shut the book and recall yesterday, 3 days ago and last week before checking. Reading is not revision; retrieval is.' },
       { id: 'weak',  label: 'Weak-area drilling',     minutes: 45, subject: null,
         note: 'Whatever the analysis exposed today. Changes daily.' },
       { id: 'puzz',  label: 'Puzzles — 2 sets',       minutes: 20, subject: 'reasoning',
@@ -92,17 +103,28 @@ export const PHASES = [
     tagline: 'Mains-only topics at depth. Mains alone decides your rank.',
     from: 69, to: 96,
     blocks: [
-      { id: 'calc',  label: 'Calculation drill',      minutes: 15, subject: 'quant',
+      { id: 'calc',  label: 'Calculation drill',      minutes: 10, subject: 'quant',
         note: 'Maintenance only. Keep the speed you built.' },
       { id: 'ga',    label: 'General Awareness',      minutes: 40, subject: 'ga',
-        note: 'Stepped up. 50 marks in 20 minutes — the best rate in the exam.' },
-      { id: 'reas',  label: 'Reasoning',              minutes: 65, subject: 'reasoning',
-        note: '1.50 marks per question in Mains — the highest of any section.' },
+        note: 'One third intake, two thirds CLOSED BOOK. Intake = cue-only notes: write the QUESTION, not the prose. Then shut the book and recall yesterday, 3 days ago and last week before checking. Reading is not revision; retrieval is.' },
+      { id: 'reas',  label: 'Reasoning',              minutes: 60, subject: 'reasoning',
+        note: '1.50 marks per question in Mains — the highest of any section. The 20m timed set is UNLABELLED and MIXED: ~40% the new topic, ~60% earlier topics from this subject, shuffled. Naming the topic removes the step that actually fails in the exam — deciding which method this is. Your scores WILL drop for about three weeks. That is the change working.' },
       { id: 'quant', label: 'Quantitative',           minutes: 60, subject: 'quant',
-        note: 'DI is ~45% of Mains Quant. Weight your practice accordingly.' },
-      { id: 'eng',   label: 'English',                minutes: 40, subject: 'english',
+        note: 'DI is ~45% of Mains Quant. Weight your practice accordingly. The 20m timed set is UNLABELLED and MIXED: ~40% the new topic, ~60% earlier topics from this subject, shuffled. Naming the topic removes the step that actually fails in the exam — deciding which method this is. Your scores WILL drop for about three weeks. That is the change working.' },
+      { id: 'eng',   label: 'English',                minutes: 35, subject: 'english',
         note: 'Lowest marks per question — deliberately the smallest block.' },
-      { id: 'rev',   label: 'Revisit + error log',    minutes: 20, subject: null,
+      /**
+       * Data Interpretation gets a standing daily set from day 1.
+       *
+       * It is 20.1 of 40 Mains Quant questions — the largest block after Current
+       * Affairs — and it has DOUBLED in Prelims since 2021 (5 Q flat for five
+       * years, now 9-12). Puzzles had a daily touch and DI did not, which was
+       * indefensible. Funded by 5 minutes from the calculation drill and 5 from
+       * English, neither of which is near its ceiling.
+       */
+      { id: 'di',    label: 'DI set — one, timed',    minutes: 10, subject: 'quant',
+        note: 'One DI set daily, timed, whatever type you meet. Speed on DI is arithmetic under pressure, not new theory.' },
+      { id: 'rev',   label: 'Revisit + error log',    minutes: 25, subject: null,
         note: 'Spaced revision queue + today\'s errors.' }
     ]
   },
@@ -117,11 +139,11 @@ export const PHASES = [
     // actual paper length before 27 December.
     blocks: [
       { id: 'ga',    label: 'General Awareness',      minutes: 30, subject: 'ga',
-        note: '50 marks in 20 minutes — the best rate in the exam, and pure recall.' },
+        note: 'One third intake, two thirds CLOSED BOOK. Intake = cue-only notes: write the QUESTION, not the prose. Then shut the book and recall yesterday, 3 days ago and last week before checking. Reading is not revision; retrieval is.' },
       { id: 'reas',  label: 'Reasoning — puzzles + logical', minutes: 55, subject: 'reasoning',
-        note: '1.50 marks per question, the highest of any section.' },
+        note: '1.50 marks per question, the highest of any section. The 20m timed set is UNLABELLED and MIXED: ~40% the new topic, ~60% earlier topics from this subject, shuffled. Naming the topic removes the step that actually fails in the exam — deciding which method this is. Your scores WILL drop for about three weeks. That is the change working.' },
       { id: 'quant', label: 'Quantitative — DI led',  minutes: 55, subject: 'quant',
-        note: 'DI is ~21 of 40 Mains Quant questions.' },
+        note: 'DI is ~21 of 40 Mains Quant questions. The 20m timed set is UNLABELLED and MIXED: ~40% the new topic, ~60% earlier topics from this subject, shuffled. Naming the topic removes the step that actually fails in the exam — deciding which method this is. Your scores WILL drop for about three weeks. That is the change working.' },
       { id: 'eng',   label: 'English',                minutes: 45, subject: 'english',
         note: 'Long RC and rearrangement. 40 marks is still 40 marks.' },
       { id: 'errbk', label: 'Error notebook + weak areas', minutes: 55, subject: null,
@@ -133,7 +155,7 @@ export const PHASES = [
       { id: 'anal',  label: 'Deep analysis',          minutes: 90, subject: null,
         note: 'Longer than the mock deserves to feel. Bucket every single error.' },
       { id: 'ga',    label: 'General Awareness',      minutes: 25, subject: 'ga',
-        note: 'Never skipped, even on mock days.' }
+        note: 'One third intake, two thirds CLOSED BOOK. Intake = cue-only notes: write the QUESTION, not the prose. Then shut the book and recall yesterday, 3 days ago and last week before checking. Reading is not revision; retrieval is.' }
     ]
   },
   {
@@ -143,13 +165,13 @@ export const PHASES = [
     from: 125, to: 144,
     blocks: [
       { id: 'ga',    label: 'GA revision pass',       minutes: 60, subject: 'ga',
-        note: 'Three complete passes over the six-month window before exam day.' },
+        note: 'One third intake, two thirds CLOSED BOOK. Intake = cue-only notes: write the QUESTION, not the prose. Then shut the book and recall yesterday, 3 days ago and last week before checking. Reading is not revision; retrieval is.' },
       { id: 'eng',   label: 'English — RC + formats', minutes: 40, subject: 'english',
         note: 'RC decays fast. 49 days without it before a 40-mark section is not a plan.' },
       { id: 'reas',  label: 'Reasoning',              minutes: 45, subject: 'reasoning',
-        note: 'Puzzles and logical reasoning at 1.50 marks each.' },
+        note: 'Puzzles and logical reasoning at 1.50 marks each. The 20m timed set is UNLABELLED and MIXED: ~40% the new topic, ~60% earlier topics from this subject, shuffled. Naming the topic removes the step that actually fails in the exam — deciding which method this is. Your scores WILL drop for about three weeks. That is the change working.' },
       { id: 'quant', label: 'Quantitative',           minutes: 40, subject: 'quant',
-        note: 'DI sets, timed.' },
+        note: 'DI sets, timed. The 20m timed set is UNLABELLED and MIXED: ~40% the new topic, ~60% earlier topics from this subject, shuffled. Naming the topic removes the step that actually fails in the exam — deciding which method this is. Your scores WILL drop for about three weeks. That is the change working.' },
       { id: 'weak',  label: 'Error notebook + weak areas', minutes: 55, subject: null,
         note: 'Your error notebook is the only revision material that matters now.' }
     ],
@@ -159,7 +181,7 @@ export const PHASES = [
       { id: 'anal',  label: 'Deep analysis',          minutes: 90, subject: null,
         note: 'Still the highest-value 90 minutes of your day.' },
       { id: 'ga',    label: 'GA revision',            minutes: 25, subject: 'ga',
-        note: 'Never skipped.' }
+        note: 'One third intake, two thirds CLOSED BOOK. Intake = cue-only notes: write the QUESTION, not the prose. Then shut the book and recall yesterday, 3 days ago and last week before checking. Reading is not revision; retrieval is.' }
     ]
   },
   {
