@@ -1,9 +1,10 @@
 /**
- * Plan browser — all 147 days grouped Phase → Week.
+ * Plan browser — all 145 days grouped Phase → Week.
  * Minimal in M1; the full week table lands in M2.
  */
 
 import { el } from '../utils/dom.js';
+import { PLAN_LABEL } from '../data/phases.js';
 import { CURRICULUM } from '../data/curriculum.js';
 import { PHASES } from '../data/phases.js';
 import { TOPIC_BY_ID } from '../data/topics.js';
@@ -73,7 +74,7 @@ export function planView() {
   return el('div.view', {}, [
     el('div.section-head', {}, [
       el('h1', { text: 'Full plan' }),
-      el('span.muted', { style: 'font-size:var(--step--1)', text: '147 days · 3 Aug – 27 Dec 2026' })
+      el('span.muted', { style: 'font-size:var(--step--1)', text: PLAN_LABEL })
     ]),
     ...sections
   ]);

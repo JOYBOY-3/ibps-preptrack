@@ -31,7 +31,7 @@ import { currentDayNumber } from './selectors.js';
  * its own, and that overflow EXPIRES instead of accumulating into a backlog no
  * human can clear. See advanceStaleRevisions().
  */
-const REVISION_OFFSETS = [1, 4, 12, 35, 75];
+export const REVISION_OFFSETS = [1, 4, 12, 35, 75];
 
 function ensureDay(draft, day) {
   if (!draft.days[day]) {

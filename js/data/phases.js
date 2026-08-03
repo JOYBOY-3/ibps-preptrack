@@ -17,6 +17,24 @@ export const TOTAL_DAYS = 145;            // 5 Aug -> 27 Dec inclusive
  * is heavier than a study day, and asking someone to do it on a random Tuesday
  * is how it gets skipped.
  */
+/**
+ * The one place the plan's shape is written for humans.
+ *
+ * Three screens had "147 days · 3 Aug – 27 Dec" hardcoded — including the sign-in
+ * gate, the first thing anyone sees — for two builds after the plan was rebased to
+ * 5 August and 145 days. Derived strings cannot drift.
+ */
+export const PLAN_LABEL = (() => {
+  // UTC throughout. Building the end date in local time and then reading it back
+  // through toISOString() shifted it a day west of UTC and printed "26 Dec" for a
+  // plan that ends on the 27th.
+  const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const fmt = d => `${d.getUTCDate()} ${M[d.getUTCMonth()]}`;
+  const start = new Date(START_DATE + 'T00:00:00Z');
+  const end = new Date(start.getTime() + (TOTAL_DAYS - 1) * 86400000);
+  return `${TOTAL_DAYS} days · ${fmt(start)} – ${fmt(end)} ${end.getUTCFullYear()}`;
+})();
+
 export const P1_REVIEW_DAYS = [5, 12, 19, 26, 33, 40];
 
 export const KEY_DATES = [

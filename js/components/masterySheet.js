@@ -235,7 +235,7 @@ function sessionGuide(topicId, topicName) {
  * Log practice against this topic.
  *
  * Without this the app has no evidence the outsourced practice ever happened.
- * topicStatus() would return 'not-started' for all 136 topics for all 147 days,
+ * topicStatus() would return 'not-started' for all 136 topics for all 145 days,
  * and the app could not tell a candidate heading for 78 from one heading for 44.
  */
 function practiceLogger(subject, topicId) {

@@ -1,5 +1,5 @@
 {
-  "name": "PrepTrack — IBPS Clerk 2026",
+  "name": "PrepTrack \u2014 IBPS Clerk 2026",
   "short_name": "PrepTrack",
   "description": "A 147-day study companion for IBPS Clerk 2026.",
   "start_url": "./#/today",
@@ -10,10 +10,22 @@
   "theme_color": "#1a5b6e",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%231a5b6e'/%3E%3Ctext x='256' y='340' font-family='system-ui,sans-serif' font-size='230' font-weight='800' fill='white' text-anchor='middle'%3EPT%3C/text%3E%3C/svg%3E",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "./assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

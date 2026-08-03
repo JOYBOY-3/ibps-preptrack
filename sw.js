@@ -3,12 +3,15 @@
  * installed it works completely offline — on a train, with no signal, at 6 a.m.
  */
 
-const CACHE = 'preptrack-v15';
+const CACHE = 'preptrack-v16';
 
 const SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
+  './assets/icons/icon-192.png',
+  './assets/icons/icon-512.png',
+  './assets/icons/icon-180.png',
   './css/fonts.css',
   './css/tokens.css',
   './css/base.css',

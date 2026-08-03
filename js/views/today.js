@@ -11,7 +11,7 @@ import { blockCard } from '../components/blockCard.js';
 import { DAY_BY_NUMBER } from '../data/curriculum.js';
 import { TOPIC_BY_ID } from '../data/topics.js';
 import { getState } from '../state/store.js';
-import { toggleBlock, setQuestionsSolved, markRevisionDone, isFutureDay } from '../state/actions.js';
+import { toggleBlock, setQuestionsSolved, markRevisionDone, isFutureDay, REVISION_OFFSETS } from '../state/actions.js';
 import {
   currentDayNumber, dayProgress, dueRevisions, streak, countdowns
 } from '../state/selectors.js';
@@ -45,7 +45,9 @@ function revisionQueue(state, day) {
         el('span.muted', { style: 'font-size:var(--step--1)',
           text: due.overdueTotal > due.length
             ? `Top ${due.length} by exam weight · ${due.overdueTotal - due.length} more can wait`
-            : 'Spaced repetition — N+1 · N+4 · N+10 · N+25 · N+55 · N+110' })
+            // Derived, never typed. A hardcoded list here silently advertised the
+            // OLD ladder for a whole build after the intervals were retuned.
+            : `Spaced repetition — ${REVISION_OFFSETS.map(o => 'N+' + o).join(' · ')}, then a forced touch 12 and 4 days before Mains` })
       ]),
       el('div.revision-list', {}, due.map(r => el('div.revision-item', {}, [
         el('div', { style: 'min-width:0' }, [

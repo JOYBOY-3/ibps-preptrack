@@ -16,6 +16,15 @@
   <link rel="stylesheet" href="./css/base.css">
   <link rel="stylesheet" href="./css/layout.css">
   <link rel="stylesheet" href="./css/components.css">
+  <!-- iOS ignores the web manifest for these. Without apple-touch-icon it uses a
+       SCREENSHOT of the page as the home-screen icon, and without
+       apple-mobile-web-app-capable it opens inside Safari chrome rather than
+       standalone. Both are required for "Add to Home Screen" to look like an app. -->
+  <link rel="apple-touch-icon" href="./assets/icons/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PrepTrack">
+  <meta name="mobile-web-app-capable" content="yes">
 </head>
 <body>
   <noscript>

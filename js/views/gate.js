@@ -8,6 +8,7 @@
  */
 
 import { el } from '../utils/dom.js';
+import { PLAN_LABEL } from '../data/phases.js';
 import { icon } from '../components/icons.js';
 import { signIn, explainAuthError, initAuth } from '../sync/googleAuth.js';
 import { connect } from '../sync/syncEngine.js';
@@ -58,7 +59,7 @@ export function gateView(onSignedIn) {
     el('div.gate__card', {}, [
       el('div.gate__mark', { text: 'PT' }),
       el('h1.gate__title', { text: 'PrepTrack' }),
-      el('p.gate__sub', { text: 'IBPS Clerk 2026 · 147 days · 3 Aug – 27 Dec' }),
+      el('p.gate__sub', { text: `IBPS Clerk 2026 · ${PLAN_LABEL}` }),
 
       el('div.gate__points', {}, [
         el('div.gate__point', {}, [
