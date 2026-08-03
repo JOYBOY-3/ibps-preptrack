@@ -180,7 +180,7 @@ export function mocksView() {
   const history = mocks.length
     ? el('section.ios-section', {}, [
         el('h2.ios-section__title', { text: `History · ${mocks.length} mock${mocks.length > 1 ? 's' : ''}` }),
-        scoreChart(mocks),
+        scoreChart(mocks, { stage }),
         el('div.ios-group', {}, mocks.slice(0, 20).map(m => el('div.ios-row', {}, [
           el('div.ios-row__text', {}, [
             el('div.ios-row__label', {}, [

@@ -89,8 +89,10 @@ export function progressView() {
 
     el('section.card', {}, [
       el('div.card__body', {}, [
-        el('span.eyebrow', { text: 'Mock scores' }),
-        el('div', { style: 'margin-top:var(--sp-3)' }, [scoreChart(state.mocks)])
+        el('span.eyebrow', { text: 'Prelims mocks · out of 100' }),
+        el('div', { style: 'margin-top:var(--sp-3)' }, [scoreChart(state.mocks, { stage: 'prelims' })]),
+        el('span.eyebrow', { style: 'display:block;margin-top:var(--sp-5)', text: 'Mains mocks · out of 200' }),
+        el('div', { style: 'margin-top:var(--sp-3)' }, [scoreChart(state.mocks, { stage: 'mains' })])
       ])
     ]),
 

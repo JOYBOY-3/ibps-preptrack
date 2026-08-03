@@ -10,23 +10,31 @@ const svgEl = (tag, attrs = {}) => {
 };
 
 /** Score-over-time line with an emphasised endpoint. */
-export function scoreChart(mocks, { height = 150 } = {}) {
+/**
+ * Prelims is out of 100, Mains out of 200. Plotting both on one autoscaled axis
+ * manufactures a fake +45 jump the day the exam changes, and simultaneously
+ * squashes real Mains progress into a flat line. So: one stage per chart, and a
+ * fixed domain per stage.
+ */
+export function scoreChart(mocks, { height = 150, stage = 'prelims' } = {}) {
   const data = [...mocks]
+    .filter(m => (m.stage || 'prelims') === stage)
     .sort((a, b) => String(a.date).localeCompare(String(b.date)))
-    .map(m => ({ v: Number(m.total) || 0, date: m.date, stage: m.stage }));
+    .map(m => ({ v: Number(m.total) || 0, date: m.date }));
 
   if (data.length < 2) {
     return el('div.chart-empty', {
-      text: data.length ? 'One mock logged. The trend appears from the second.' : 'No mocks logged yet.'
+      text: data.length
+        ? `One ${stage} mock logged. The trend appears from the second.`
+        : `No ${stage} mocks logged yet.`
     });
   }
 
   const W = 320, H = height, PAD = { t: 12, r: 10, b: 20, l: 30 };
   const iw = W - PAD.l - PAD.r, ih = H - PAD.t - PAD.b;
-  const vals = data.map(d => d.v);
-  const max = Math.max(...vals, 10);
-  const min = Math.min(...vals, 0);
-  const span = max - min || 1;
+  const max = stage === 'mains' ? 200 : 100;   // the real paper total, not the observed range
+  const min = 0;
+  const span = max - min;
 
   const x = i => PAD.l + (data.length === 1 ? iw / 2 : (i / (data.length - 1)) * iw);
   const y = v => PAD.t + ih - ((v - min) / span) * ih;

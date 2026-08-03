@@ -24,7 +24,7 @@ export const PHASES = [
     tagline: 'Cover the syllabus deeply. ~70% Prelims, ~30% Mains.',
     from: 1, to: 45,
     blocks: [
-      { id: 'calc',  label: 'Calculation drill',      minutes: 20, subject: 'quant',
+      { id: 'calc',  label: 'Calculation drill',      minutes: 15, subject: 'quant',
         note: 'Tables to 30 · squares to 40 · cubes to 20 · fraction↔% table' },
       { id: 'ga',    label: 'General Awareness',      minutes: 30, subject: 'ga',
         note: 'Current affairs + the day\'s banking module. Written notes.' },
@@ -34,8 +34,10 @@ export const PHASES = [
         note: 'Mastery Protocol: 15m concept → 20m untimed → 20m timed → 5m error log' },
       { id: 'eng',   label: 'English',                minutes: 45, subject: 'english',
         note: 'Topic of the day + 1 Reading Comprehension, timed. RC is never skipped.' },
-      { id: 'rev',   label: 'Revisit + error log',    minutes: 25, subject: null,
-        note: 'Yesterday\'s topic — 10 questions. Then log today\'s mistakes.' }
+      // Puzzles are 17 of 35 Prelims Reasoning questions and decay fastest, so they
+      // get a daily touch rather than only appearing on their own teaching days.
+      { id: 'rev',   label: '2 puzzle sets + revisit + error log', minutes: 30, subject: 'reasoning',
+        note: 'Two puzzle sets, timed · yesterday\'s topic — 10 questions · then log today\'s mistakes.' }
     ]
   },
   {
@@ -90,17 +92,29 @@ export const PHASES = [
     name: 'Mains Mock Engine',
     tagline: 'Mains mocks 4–5× a week. GA consolidation begins.',
     from: 99, to: 126,
+    // Four build days and three mock days a week. A single fixed template cannot
+    // hold both: a real Mains paper is 120-125 minutes, so a 60-minute "full
+    // length mock" block was a lie that would leave you never having sat the
+    // actual paper length before 27 December.
     blocks: [
-      { id: 'ga',    label: 'General Awareness',      minutes: 45, subject: 'ga',
-        note: 'Doubled. Highest marks per minute in the exam.' },
-      { id: 'mock',  label: 'Mains mock / sectionals', minutes: 60, subject: null,
-        note: 'Attempt GA first in every Mains mock — fastest 50 marks.' },
-      { id: 'anal',  label: 'Analysis + weak areas',  minutes: 70, subject: null,
-        note: 'Bucket every error. Fix only the largest bucket each week.' },
-      { id: 'reas',  label: 'Reasoning — puzzles + logical', minutes: 45, subject: 'reasoning',
-        note: 'Puzzles ~19Q, logical reasoning ~7.5Q, at 1.5 marks each.' },
-      { id: 'quant', label: 'Quant — DI set',        minutes: 20, subject: 'quant',
-        note: 'One DI set daily, minimum.' }
+      { id: 'ga',    label: 'General Awareness',      minutes: 30, subject: 'ga',
+        note: '50 marks in 20 minutes — the best rate in the exam, and pure recall.' },
+      { id: 'reas',  label: 'Reasoning — puzzles + logical', minutes: 55, subject: 'reasoning',
+        note: '1.50 marks per question, the highest of any section.' },
+      { id: 'quant', label: 'Quantitative — DI led',  minutes: 55, subject: 'quant',
+        note: 'DI is ~21 of 40 Mains Quant questions.' },
+      { id: 'eng',   label: 'English',                minutes: 45, subject: 'english',
+        note: 'Long RC and rearrangement. 40 marks is still 40 marks.' },
+      { id: 'errbk', label: 'Error notebook + weak areas', minutes: 55, subject: null,
+        note: 'Drill exactly what your last mock exposed. Nothing else.' }
+    ],
+    blocksMock: [
+      { id: 'mock',  label: 'FULL Mains mock — 125 min', minutes: 125, subject: null,
+        note: 'The real paper length, sectionally timed. Attempt GA first.' },
+      { id: 'anal',  label: 'Deep analysis',          minutes: 90, subject: null,
+        note: 'Longer than the mock deserves to feel. Bucket every single error.' },
+      { id: 'ga',    label: 'General Awareness',      minutes: 25, subject: 'ga',
+        note: 'Never skipped, even on mock days.' }
     ]
   },
   {
@@ -111,14 +125,22 @@ export const PHASES = [
     blocks: [
       { id: 'ga',    label: 'GA revision pass',       minutes: 60, subject: 'ga',
         note: 'Three complete passes over the six-month window before exam day.' },
-      { id: 'mock',  label: 'Mains mock',             minutes: 60, subject: null,
-        note: 'Same time of day as your exam slot.' },
-      { id: 'anal',  label: 'Analysis',               minutes: 60, subject: null,
-        note: 'Still the highest-value hour of your day.' },
-      { id: 'errbk', label: 'Error notebook',         minutes: 30, subject: null,
-        note: 'Full passes. This is your only revision material now.' },
-      { id: 'weak',  label: 'Weak-area drilling',     minutes: 30, subject: null,
-        note: 'Narrow and specific. No new topics.' }
+      { id: 'eng',   label: 'English — RC + formats', minutes: 40, subject: 'english',
+        note: 'RC decays fast. 49 days without it before a 40-mark section is not a plan.' },
+      { id: 'reas',  label: 'Reasoning',              minutes: 45, subject: 'reasoning',
+        note: 'Puzzles and logical reasoning at 1.50 marks each.' },
+      { id: 'quant', label: 'Quantitative',           minutes: 40, subject: 'quant',
+        note: 'DI sets, timed.' },
+      { id: 'weak',  label: 'Error notebook + weak areas', minutes: 55, subject: null,
+        note: 'Your error notebook is the only revision material that matters now.' }
+    ],
+    blocksMock: [
+      { id: 'mock',  label: 'FULL Mains mock — 125 min', minutes: 125, subject: null,
+        note: 'Same time of day as your real slot. GA first.' },
+      { id: 'anal',  label: 'Deep analysis',          minutes: 90, subject: null,
+        note: 'Still the highest-value 90 minutes of your day.' },
+      { id: 'ga',    label: 'GA revision',            minutes: 25, subject: 'ga',
+        note: 'Never skipped.' }
     ]
   },
   {

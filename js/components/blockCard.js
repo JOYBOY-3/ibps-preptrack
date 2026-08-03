@@ -23,7 +23,7 @@ function resourceRow(resourceId) {
   ]);
 }
 
-export function blockCard(block, { done, isNext, onToggle }) {
+export function blockCard(block, { done, isNext, onToggle, locked = false }) {
   const topic = block.topicId ? TOPIC_BY_ID[block.topicId] : null;
   const subject = block.subject;
   const meta = subject ? SUBJECT_META[subject] : null;
@@ -68,11 +68,13 @@ export function blockCard(block, { done, isNext, onToggle }) {
         : null,
       el(`button.btn${done ? '.btn--done' : '.btn--primary'}`, {
         type: 'button',
+        disabled: locked,
+        title: locked ? 'Available on the day itself' : null,
         'aria-pressed': done ? 'true' : 'false',
-        onclick: () => onToggle(block.id)
+        onclick: () => { if (!locked) onToggle(block.id); }
       }, [
         icon(done ? 'check' : 'circle'),
-        done ? 'Completed' : 'Mark complete'
+        locked ? 'Not yet' : (done ? 'Completed' : 'Mark complete')
       ])
     ])
   ]);

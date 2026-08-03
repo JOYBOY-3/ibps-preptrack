@@ -4,8 +4,20 @@ import { update, replaceState } from './store.js';
 import { DAY_BY_NUMBER } from '../data/curriculum.js';
 import { todayISO, addDays, iso } from '../utils/dates.js';
 
-/** Spaced repetition: a topic studied on day N is revisited at N+1, N+7, N+21. */
-const REVISION_OFFSETS = [1, 7, 21];
+/**
+ * Spaced repetition ladder.
+ *
+ * The old [1, 7, 21] was arithmetically impossible and stopped far too early.
+ * Four topic-bearing blocks a day times three rungs meant ~12 items due EVERY day
+ * from day 22 against a 30-minute block — so the queue became an unread backlog by
+ * mid-September and the retention mechanism died. And the last rung landed 21 days
+ * after first study: a topic learned on day 5 was never scheduled again before
+ * Mains on day 147.
+ *
+ * This ladder is expanding, and its final rung lands ~110 days out so August
+ * material still gets a touch in December.
+ */
+const REVISION_OFFSETS = [1, 4, 10, 25, 55, 110];
 
 function ensureDay(draft, day) {
   if (!draft.days[day]) {
@@ -24,9 +36,17 @@ function ensureTopic(draft, topicId) {
   return draft.topics[topicId];
 }
 
+export function isFutureDay(dayNumber) {
+  const d = DAY_BY_NUMBER[dayNumber];
+  return Boolean(d && d.date > todayISO());
+}
+
 export function toggleBlock(dayNumber, blockId) {
   return update(draft => {
     const curriculumDay = DAY_BY_NUMBER[dayNumber];
+    // A day you have not lived through yet cannot be complete. Without this the
+    // whole tracker is decorative: 147 days can be ticked in an afternoon.
+    if (curriculumDay && curriculumDay.date > todayISO()) return draft;
     const day = ensureDay(draft, dayNumber);
     const nowDone = !day.blocks[blockId];
     day.blocks[blockId] = nowDone;
@@ -68,11 +88,38 @@ export function setDayNotes(dayNumber, notes) {
   });
 }
 
-export function markRevisionDone(topicId, offset) {
+/**
+ * Grade a revision instead of just dismissing it.
+ *   solid  — you had it. Advance to the next rung.
+ *   shaky  — repeat this rung in 2 days rather than advancing.
+ *   failed — drop two rungs back; you have not retained it.
+ * A binary "Done" button teaches the app nothing and lets you tick away a topic
+ * you could not actually solve.
+ */
+export function markRevisionDone(topicId, offset, quality = 'solid') {
   return update(draft => {
     const topic = draft.topics[topicId];
-    const rev = topic?.revisions.find(r => r.offset === offset);
-    if (rev) rev.done = true;
+    const rev = topic?.revisions.find(r => r.offset === offset && !r.done);
+    if (!rev) return draft;
+    rev.done = true;
+    rev.quality = quality;
+    rev.reviewedOn = todayISO();
+
+    const base = topic.firstStudied;
+    if (!base) return draft;
+
+    const idx = REVISION_OFFSETS.indexOf(offset);
+    let nextOffset = null;
+    if (quality === 'solid') nextOffset = REVISION_OFFSETS[idx + 1] ?? null;
+    else if (quality === 'shaky') nextOffset = offset + 2;
+    else nextOffset = REVISION_OFFSETS[Math.max(0, idx - 2)] + 1;
+
+    if (nextOffset !== null) {
+      const due = iso(addDays(base, nextOffset));
+      if (!topic.revisions.some(r => r.due === due && !r.done)) {
+        topic.revisions.push({ due, offset: nextOffset, done: false });
+      }
+    }
     return draft;
   });
 }

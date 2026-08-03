@@ -61,8 +61,17 @@ export function missedDays(state) {
   ).length;
 }
 
-/** Revision items due on or before today, with their topic resolved. */
-export function dueRevisions(state, onDate = todayISO()) {
+/**
+ * Revision items due on or before today.
+ *
+ * Deliberately CAPPED. An unbounded queue showing "217 overdue" is not a queue,
+ * it is a reason to stop opening the app. Ranked by exam weight so that when you
+ * cannot clear everything you clear the marks that matter, and the overflow is
+ * reported separately rather than shown as a wall.
+ */
+export const REVISION_QUEUE_LIMIT = 6;
+
+export function dueRevisions(state, onDate = todayISO(), limit = REVISION_QUEUE_LIMIT) {
   const out = [];
   for (const [topicId, t] of Object.entries(state.topics)) {
     for (const rev of t.revisions || []) {
@@ -71,7 +80,11 @@ export function dueRevisions(state, onDate = todayISO()) {
       }
     }
   }
-  return out.sort((a, b) => a.due.localeCompare(b.due));
+  const weight = r => (r.topic?.prelimsWeight || 0) + (r.topic?.mainsWeight || 0);
+  out.sort((a, b) => (weight(b) - weight(a)) || a.due.localeCompare(b.due));
+  const shown = out.slice(0, limit);
+  shown.overdueTotal = out.length;
+  return shown;
 }
 
 export function topicAccuracy(state, topicId) {
@@ -84,13 +97,26 @@ export function topicAccuracy(state, topicId) {
 
 export function topicStatus(state, topicId) {
   const t = state.topics[topicId];
-  const target = TOPIC_BY_ID[topicId]?.targetQuestions ?? 70;
   if (!t) return 'not-started';
-  const attempted = t.untimed + t.timed;
+  const attempted = (t.untimed || 0) + (t.timed || 0);
   if (attempted === 0) return 'not-started';
+
+  // GA topics carry targetQuestions: 0 because they are recall, not practice.
+  // Without this floor a single logged question would promote them to "mastered".
+  const declared = TOPIC_BY_ID[topicId]?.targetQuestions ?? 70;
+  const target = declared > 0 ? declared : 40;
+
   if (attempted < target) return 'in-progress';
   const acc = topicAccuracy(state, topicId);
   return acc !== null && acc >= 0.7 ? 'mastered' : 'needs-rework';
+}
+
+/** Topics with real practice logged, worst accuracy first. Drives "needs rework". */
+export function topicsByWeakness(state) {
+  return Object.keys(state.topics)
+    .map(id => ({ id, topic: TOPIC_BY_ID[id], status: topicStatus(state, id), accuracy: topicAccuracy(state, id) }))
+    .filter(t => t.topic && t.accuracy !== null)
+    .sort((a, b) => a.accuracy - b.accuracy);
 }
 
 export function bucketCounts(state) {

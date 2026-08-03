@@ -9,6 +9,9 @@
 import { el, $ } from '../utils/dom.js';
 import { icon } from './icons.js';
 import { getMastery } from '../data/mastery.js';
+import { logTopicPractice } from '../state/actions.js';
+import { getState } from '../state/store.js';
+import { topicAccuracy, topicStatus } from '../state/selectors.js';
 import { toast } from '../utils/ui.js';
 
 const DIFFICULTY_LABEL = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
@@ -103,11 +106,12 @@ export async function openMasterySheet(subject, topicId, topicName) {
   ]);
 
   body.replaceChildren(
-    m.needsReview
+    m.confidence === 'medium' || m.confidence === 'low'
       ? el('div.banner.banner--warn', {}, [icon('alert', 'banner__icon'), el('div', {}, [
-          el('strong', { text: 'Under review. ' }),
-          'A reviewer flagged parts of this topic as inaccurate. Treat the method as a ' +
-          'starting point and verify against your book until this is corrected.'
+          el('strong', { text: 'Cross-check this one. ' }),
+          'The method below is written with ' + m.confidence + ' confidence. It is sound as far as ' +
+          'review could establish, but verify it against your book the first time you use it — ' +
+          'and if your book disagrees, trust your book.'
         ])])
       : null,
     chips,
@@ -119,6 +123,7 @@ export async function openMasterySheet(subject, topicId, topicName) {
     section('You have mastered it when', m.masteryCheck ? el('p', { text: m.masteryCheck }) : null),
     section('How IBPS asks it', bullets(m.questionPatterns)),
     section('Your 60-minute block', prose(m.blockPlan)),
+    practiceLogger(subject, topicId),
     section('Where to study it', el('div.ms-res', {}, [
       m.bookRef ? el('div.resource', {}, [icon('book', 'resource__icon'), el('span', { text: m.bookRef })]) : null,
       m.websiteRef
@@ -144,6 +149,56 @@ export async function openMasterySheet(subject, topicId, topicName) {
         : null
     ]))
   );
+}
+
+/**
+ * Log practice against this topic.
+ *
+ * Without this the app has no evidence the outsourced practice ever happened.
+ * topicStatus() would return 'not-started' for all 136 topics for all 147 days,
+ * and the app could not tell a candidate heading for 78 from one heading for 44.
+ */
+function practiceLogger(subject, topicId) {
+  const state = getState();
+  const rec = state.topics[topicId] || {};
+  const attempted = (rec.untimed || 0) + (rec.timed || 0);
+  const acc = topicAccuracy(state, topicId);
+  const status = topicStatus(state, topicId);
+
+  const untimed = el('input.input.input--num', { type: 'number', min: '0', placeholder: '0', inputmode: 'numeric' });
+  const timed   = el('input.input.input--num', { type: 'number', min: '0', placeholder: '0', inputmode: 'numeric' });
+  const correct = el('input.input.input--num', { type: 'number', min: '0', placeholder: '0', inputmode: 'numeric' });
+
+  const STATUS_TONE = { mastered: 'chip--good', 'needs-rework': 'chip--danger', 'in-progress': 'chip--warn' };
+  const STATUS_TEXT = { mastered: 'Mastered', 'needs-rework': 'Needs rework',
+                        'in-progress': 'In progress', 'not-started': 'Not started' };
+
+  return el('section.ms-sec', {}, [
+    el('h3.ms-sec__title', { text: 'Log your practice' }),
+    el('div.practice', {}, [
+      el('div.practice__now', {}, [
+        el(`span.chip${STATUS_TONE[status] ? '.' + STATUS_TONE[status] : ''}`, { text: STATUS_TEXT[status] }),
+        el('span.muted', { text: `${attempted} questions logged` }),
+        acc !== null ? el('span.mono', { text: `${Math.round(acc * 100)}% accuracy` }) : null
+      ]),
+      el('div.practice__grid', {}, [
+        el('label', {}, [el('span', { text: 'Untimed' }), untimed]),
+        el('label', {}, [el('span', { text: 'Timed' }), timed]),
+        el('label', {}, [el('span', { text: 'Correct' }), correct])
+      ]),
+      el('button.btn.btn--full', {
+        type: 'button',
+        onclick: () => {
+          const u = Number(untimed.value) || 0, t = Number(timed.value) || 0, c = Number(correct.value) || 0;
+          if (!u && !t) { toast('Enter how many you attempted', 'danger'); return; }
+          if (c > u + t) { toast('Correct cannot exceed attempted', 'danger'); return; }
+          logTopicPractice(topicId, { untimed: u, timed: t, correct: c });
+          untimed.value = timed.value = correct.value = '';
+          toast('Practice logged');
+        }
+      }, [icon('check'), 'Add to this topic'])
+    ])
+  ]);
 }
 
 function shortTime(t) {

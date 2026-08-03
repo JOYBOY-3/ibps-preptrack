@@ -1281,3 +1281,27 @@ body {
   .chart__line { animation: none; stroke-dashoffset: 0; }
   .bar__fill, .mock-err { animation: none; }
 }
+
+/* ---------------------------------------------------------------- revision grading */
+.rev-grade { display: flex; gap: 4px; flex: none; }
+.rev-grade .btn { min-height: 32px; padding-inline: var(--sp-2); font-size: var(--step--2); }
+.rev-grade__solid { border-color: var(--good); color: var(--good); }
+.rev-grade__solid:hover { background: var(--good-soft); }
+.rev-grade__failed { border-color: var(--danger); color: var(--danger); }
+.rev-grade__failed:hover { background: var(--danger-soft); }
+.revision-item { align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+
+/* ---------------------------------------------------------------- practice logger */
+.practice {
+  display: flex; flex-direction: column; gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--surface-2);
+  border-radius: 14px;
+}
+.practice__now { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; font-size: var(--step--1); }
+.practice__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-2); }
+.practice__grid label { display: flex; flex-direction: column; gap: 4px; }
+.practice__grid span {
+  font-size: var(--step--2); font-weight: 700;
+  letter-spacing: var(--tracking-wide); text-transform: uppercase; color: var(--muted);
+}

@@ -163,6 +163,26 @@ const P4_QUANT = [
 ];
 
 // ------------------------------------------------------------------ P5 · days 127–146
+const P4_ENGLISH = [
+  'e-rc-long', 'e-rc-multi', 'e-cloze-mains', 'e-error-mains', 'e-sent-rearr',
+  'e-connectors', 'e-rc-econ', 'e-paracompletion', 'e-rc-social', 'e-inference',
+  'e-cloze-replace', 'e-matchcol', 'e-coherent', 'e-phrase'
+];
+const P5_REASONING = [
+  'r-triple-row', 'r-inscribed', 'r-assumption', 'r-io-1', 'r-blood-seating',
+  'r-inference', 'r-ds-3', 'r-coa', 'r-circular', 'r-box'
+];
+// P4 has 16 build days, so only its first 16 entries ever render. These are the
+// arithmetic topics that fall past that line — they belong here, not in P4's tail.
+const P5_QUANT = [
+  'q-numsys', 'q-average', 'q-ages', 'q-boats', 'q-trains', 'q-partnership',
+  'q-di-caselet', 'q-di-arith', 'q-di-new', 'q-quantity'
+];
+const P5_ENGLISH = [
+  'e-rc-long', 'e-rc-multi', 'e-error-mains', 'e-cloze-mains', 'e-sent-rearr',
+  'e-rc-econ', 'e-connectors', 'e-rc-social', 'e-inference', 'e-phrase'
+];
+
 const P5_PASS = [
   'GA revision pass 1 — July to September',
   'GA revision pass 1 — October to December',
@@ -179,8 +199,9 @@ const P5_PASS = [
  */
 const BLOCK_TOPIC_SLOT = { reas: 0, quant: 1, eng: 2, ga: 3 };
 
-function blocksFor(day, phase, assign, extras = {}) {
-  return phase.blocks.map(b => {
+function blocksFor(day, phase, assign, extras = {}, useMockTemplate = false) {
+  const template = (useMockTemplate && phase.blocksMock) ? phase.blocksMock : phase.blocks;
+  return template.map(b => {
     const slot = BLOCK_TOPIC_SLOT[b.id];
     return {
       ...b,
@@ -289,29 +310,50 @@ function buildDay(day) {
   // ---------------------------------------------------------------- P4
   else if (phase.id === 'P4') {
     const i = day - 99;
+    // Mon/Wed/Sat are full-length mock days; the rest are build days. Three real
+    // 125-minute mocks a week trains the stamina the paper actually demands.
+    const isMockDay = [0, 2, 5].includes(i % 7);
+    // Advance the topic rotations on BUILD days only. Indexing by raw day number
+    // would silently drop 3 of every 7 entries, because mock days use a template
+    // with no reasoning/quant/english slots to put them in.
+    let bi = 0;
+    for (let k = 0; k < i; k++) if (![0, 2, 5].includes(k % 7)) bi++;
     base.weekTheme = 'Mains Mock Engine';
-    base.type = i % 7 === 6 ? 'review' : 'mock';
-    base.headline = P4_FOCUS[i % P4_FOCUS.length];
+    base.type = isMockDay ? 'mock' : 'study';
+    base.headline = isMockDay
+      ? 'FULL-LENGTH Mains mock — 125 minutes, sectionally timed'
+      : 'Build day — Reasoning, Quant, English, GA';
     base.blocks = blocksFor(day, phase, [
-      P4_REASONING[i % P4_REASONING.length],
-      P4_QUANT[i % P4_QUANT.length],
-      null,
+      P4_REASONING[bi % P4_REASONING.length],
+      P4_QUANT[bi % P4_QUANT.length],
+      P4_ENGLISH[bi % P4_ENGLISH.length],
       P4_GA[i % P4_GA.length]
-    ]);
+    ], {}, isMockDay);
   }
 
   // ---------------------------------------------------------------- P5
   else if (phase.id === 'P5') {
     const i = day - 127;
-    base.weekTheme = day >= 144 ? 'Taper' : 'Mains Final';
-    base.type = day >= 144 ? 'taper' : 'mock';
-    base.headline = day >= 144
-      ? 'Taper — light mocks, error notebook, sleep'
-      : P5_PASS[Math.floor(i / 5) % P5_PASS.length];
-    base.detail = day >= 144
+    const taper = day >= 144;
+    const isMockDay = !taper && [0, 2, 4, 6].includes(i % 7);
+    let bi = 0;
+    for (let k = 0; k < i; k++) if (![0, 2, 4, 6].includes(k % 7)) bi++;
+    base.weekTheme = taper ? 'Taper' : 'Mains Final';
+    base.type = taper ? 'taper' : (isMockDay ? 'mock' : 'study');
+    base.headline = taper
+      ? 'Taper — light revision, error notebook, sleep'
+      : isMockDay
+        ? 'FULL-LENGTH Mains mock — 125 minutes'
+        : P5_PASS[Math.floor(i / 5) % P5_PASS.length];
+    base.detail = taper
       ? 'Cut to two hours. Your brain needs to be fresh on 27 December, not full.'
-      : 'Daily mock + analysis. GA revision runs in parallel — three complete passes before exam day.';
-    base.blocks = blocksFor(day, phase, [null, null, null, null]);
+      : 'Four full-length mocks a week, plus three complete GA revision passes before exam day.';
+    base.blocks = blocksFor(day, phase, [
+      P5_REASONING[bi % P5_REASONING.length],
+      P5_QUANT[bi % P5_QUANT.length],
+      P5_ENGLISH[bi % P5_ENGLISH.length],
+      null
+    ], {}, isMockDay);
   }
 
   return base;

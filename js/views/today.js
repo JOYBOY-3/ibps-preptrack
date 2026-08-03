@@ -11,7 +11,7 @@ import { blockCard } from '../components/blockCard.js';
 import { DAY_BY_NUMBER } from '../data/curriculum.js';
 import { TOPIC_BY_ID } from '../data/topics.js';
 import { getState } from '../state/store.js';
-import { toggleBlock, setQuestionsSolved, markRevisionDone } from '../state/actions.js';
+import { toggleBlock, setQuestionsSolved, markRevisionDone, isFutureDay } from '../state/actions.js';
 import {
   currentDayNumber, dayProgress, dueRevisions, streak, countdowns
 } from '../state/selectors.js';
@@ -35,17 +35,32 @@ function revisionQueue(state, day) {
     el('div.card__body', {}, [
       el('div.section-head', { style: 'margin-bottom:var(--sp-3)' }, [
         el('span.eyebrow', { text: `Due for revision (${due.length})` }),
-        el('span.muted', { style: 'font-size:var(--step--1)', text: 'Spaced repetition — N+1 · N+7 · N+21' })
+        el('span.muted', { style: 'font-size:var(--step--1)',
+          text: due.overdueTotal > due.length
+            ? `Top ${due.length} by exam weight · ${due.overdueTotal - due.length} more can wait`
+            : 'Spaced repetition — N+1 · N+4 · N+10 · N+25 · N+55 · N+110' })
       ]),
       el('div.revision-list', {}, due.map(r => el('div.revision-item', {}, [
-        el('div', {}, [
+        el('div', { style: 'min-width:0' }, [
           el('div.revision-item__name', { text: r.topic?.name || r.topicId }),
-          el('div.muted', { text: `Scheduled N+${r.offset} · due ${relative(r.due)}` })
+          el('div.muted', { text: `N+${r.offset} · due ${relative(r.due)}` })
         ]),
-        el('button.btn.btn--sm', {
-          type: 'button',
-          onclick: () => { markRevisionDone(r.topicId, r.offset); announce('Revision marked done'); }
-        }, ['Done'])
+        // Grading, not dismissing. A single "Done" button lets you tick away a
+        // topic you could not actually solve, and teaches the schedule nothing.
+        el('div.rev-grade', {}, [
+          el('button.btn.btn--sm.rev-grade__solid', {
+            type: 'button', title: 'I had it — push it further out',
+            onclick: () => { markRevisionDone(r.topicId, r.offset, 'solid'); announce('Marked solid'); }
+          }, ['Solid']),
+          el('button.btn.btn--sm', {
+            type: 'button', title: 'Slow or unsure — repeat in 2 days',
+            onclick: () => { markRevisionDone(r.topicId, r.offset, 'shaky'); announce('Marked shaky'); }
+          }, ['Shaky']),
+          el('button.btn.btn--sm.rev-grade__failed', {
+            type: 'button', title: 'Could not do it — drop back two rungs',
+            onclick: () => { markRevisionDone(r.topicId, r.offset, 'failed'); announce('Marked failed'); }
+          }, ['Failed'])
+        ])
       ])))
     ])
   ]);
@@ -121,9 +136,18 @@ export function todayView() {
   // Warm the mastery files for today's subjects so the sheet opens instantly.
   for (const b of day.blocks) if (b.subject) prefetchSubject(b.subject);
 
+  const future = isFutureDay(dayNumber);
+  if (future) {
+    banners.push(el('div.banner.banner--accent', {}, [icon('clock', 'banner__icon'), el('div', {}, [
+      el('strong', { text: 'This day has not happened yet. ' }),
+      'You can read ahead, but blocks can only be ticked on the day itself — a plan you can tick in an afternoon tracks nothing.'
+    ])]));
+  }
+
   const cards = day.blocks.map(b => blockCard(b, {
     done: !!saved.blocks?.[b.id],
-    isNext: firstIncomplete?.id === b.id,
+    isNext: !future && firstIncomplete?.id === b.id,
+    locked: future,
     onToggle: id => {
       toggleBlock(dayNumber, id);
       const nowDone = !saved.blocks?.[id];
