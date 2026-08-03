@@ -214,7 +214,10 @@
     white-space: nowrap;
   }
 
-  .nav-item::before { content: none; }
+  /* Must match the mobile rule's specificity or it never wins: that rule is
+     .nav-item[aria-current='page']::before (0,2,1), not .nav-item::before (0,1,1). */
+  .nav-item::before,
+  .nav-item[aria-current='page']::before { content: none; }
 
   .nav-item:hover { background: var(--surface-2); }
 

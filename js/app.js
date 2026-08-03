@@ -86,11 +86,21 @@ function render() {
   const nav = $('.app-nav');
   if (nav) nav.replaceWith(renderNav(route.id));
 
-  // Auto-scroll to the first incomplete block — starting costs zero taps.
+  /**
+   * Auto-scroll to the first incomplete block — but ONLY when you are mid-day.
+   *
+   * Scrolling unconditionally meant that opening the app fresh, with nothing
+   * ticked, jumped ~410px and pushed the day header, the Prelims countdown and
+   * the revision queue off-screen. You would open PrepTrack and not be able to
+   * see what day it was. If nothing is done yet, the top of the page IS where
+   * you should be.
+   */
   if (route.id === 'today') {
     requestAnimationFrame(() => {
+      const cards = [...main.querySelectorAll('.block-card')];
       const next = main.querySelector('.block-card.is-next');
-      if (next && window.scrollY < 40) {
+      const midDay = next && cards.indexOf(next) > 0;
+      if (midDay && window.scrollY < 40) {
         const top = next.getBoundingClientRect().top + window.scrollY - 90;
         window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
       }

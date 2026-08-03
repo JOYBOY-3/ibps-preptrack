@@ -27,6 +27,11 @@ body {
 
 img, video { display: block; max-width: 100%; }
 
+/* The UA rule [hidden]{display:none} is a plain element rule, so ANY class that
+   sets its own display silently defeats it — which is how a "Day complete" chip
+   ended up showing at 0 of 6 blocks. This has to win. */
+[hidden] { display: none !important; }
+
 /* SVGs get an explicit default size. Without this a viewBox-only icon has no
    intrinsic dimensions and expands to fill its container — the bug that made
    every icon render enormous. Specific sizes below override this. */

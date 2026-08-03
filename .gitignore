@@ -11,3 +11,7 @@ Thumbs.db
 # Local scratch
 node_modules/
 *.log
+
+# visual QA output
+tools/shots/
+_seed.*.html
