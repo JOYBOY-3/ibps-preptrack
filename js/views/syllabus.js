@@ -328,50 +328,49 @@ export function syllabusView() {
 }
 
 /**
- * The exam structure, as the notification prints it.
+ * The exam structure.
  *
- * Every figure is read from official.js — nothing here is typed. Sr. No., Name of
- * Tests, Medium, No. of Questions, Maximum Marks, Time allotted, and a Total row
- * computed from the sections rather than stated, so the table can never disagree
- * with itself.
+ * FOUR columns, not the notification's six. Sr. No. is a row number carrying no
+ * information, and Medium is one character wide with a footnote explaining it —
+ * both were costing horizontal space that Questions, Marks and Time needed on a
+ * phone. What remains fits a 320px screen without scrolling at all, which beats
+ * a faithful six-column reproduction you have to drag sideways to read.
+ *
+ * Every figure is read from official.js, and the Total row is COMPUTED from the
+ * sections rather than stated, so the table cannot disagree with itself.
  */
 function structureTable(spec) {
-  const rows = spec.sections.map((s, i) => el('tr', {}, [
-    el('td.syl-st__no', { text: String(i + 1) }),
-    el('th.syl-st__name', { scope: 'row', text: s.name }),
-    el('td.syl-st__med', { text: s.medium }),
-    el('td', { text: String(s.questions) }),
-    el('td', { text: String(s.marks) }),
-    el('td.syl-st__time', { text: `${s.minutes} minutes` })
-  ]));
+  const sum = key => spec.sections.reduce((a, s) => a + s[key], 0);
 
   return el('div', {}, [
     el('div.g-tablewrap', {}, [
       el('table.g-table.syl-st', {}, [
         el('thead', {}, [el('tr', {}, [
-          el('th', { text: 'Sr.' }),
-          el('th', {}, [
-            'Name of Tests',
+          el('th.syl-st__name', {}, [
+            'Test',
             // The notification's own header says this, and it matters: the four
             // Mains sections can appear in ANY order on the day.
-            spec.notBySequence ? el('span.syl-st__seq', { text: ' (NOT BY SEQUENCE)' }) : null
+            spec.notBySequence ? el('span.syl-st__seq', { text: 'NOT BY SEQUENCE' }) : null
           ]),
-          el('th', { text: 'Medium' }),
-          el('th', { text: 'Questions' }),
-          el('th', { text: 'Marks' }),
-          el('th', { text: 'Time (separately timed)' })
+          el('th.syl-st__n', { text: 'Qs' }),
+          el('th.syl-st__n', { text: 'Marks' }),
+          el('th.syl-st__time', { text: 'Time' })
         ])]),
-        el('tbody', {}, rows),
+        el('tbody', {}, spec.sections.map(s => el('tr', {}, [
+          el('th.syl-st__name', { scope: 'row', text: s.name }),
+          el('td.syl-st__n', { text: String(s.questions) }),
+          el('td.syl-st__n', { text: String(s.marks) }),
+          el('td.syl-st__time', { text: `${s.minutes} min` })
+        ]))),
         el('tfoot', {}, [el('tr.syl-st__total', {}, [
-          el('td', {}),
-          el('th', { scope: 'row', text: 'Total' }),
-          el('td', {}),
-          el('td', { text: String(spec.sections.reduce((a, s) => a + s.questions, 0)) }),
-          el('td', { text: String(spec.sections.reduce((a, s) => a + s.marks, 0)) }),
-          el('td', { text: `${spec.totalMinutes} minutes` })
+          el('th.syl-st__name', { scope: 'row', text: 'Total' }),
+          el('td.syl-st__n', { text: String(sum('questions')) }),
+          el('td.syl-st__n', { text: String(sum('marks')) }),
+          el('td.syl-st__time', { text: `${spec.totalMinutes} min` })
         ])])
       ])
     ]),
+    el('p.syl-official__fine', { text: 'Each test is separately timed — you cannot carry unused minutes from one section into the next.' }),
     el('p.syl-official__fine', { text: MEDIUM_NOTE }),
     el('p.syl-official__fine', { text: `Penalty for wrong answers: ${NEGATIVE_MARK} of the marks assigned to that question is deducted. A blank answer carries no penalty.` }),
     spec.qualifyingNote ? el('p.syl-official__fine', { text: spec.qualifyingNote }) : null

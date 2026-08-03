@@ -1777,29 +1777,6 @@ body {
 }
 
 
-/* ---- the exam structure, laid out as the notification lays it out.
-   A table beats chips here: the per-section split is the part that decides how
-   you spend the 60 or 125 minutes, and chips could only show paper totals. */
-.syl-st { margin-top: var(--sp-3); }
-.syl-st thead th { white-space: nowrap; }
-.syl-st__no   { width: 1%; color: var(--muted); font-variant-numeric: tabular-nums; }
-.syl-st__name { white-space: normal !important; min-width: 9rem; }
-.syl-st__med  { color: var(--muted); }
-.syl-st__time { white-space: nowrap; }
-.syl-st__seq {
-  display: block; font-size: 0.6rem; font-weight: 800;
-  letter-spacing: var(--tracking-wide); color: var(--warn); margin-top: 1px;
-}
-.syl-st__total th, .syl-st__total td {
-  font-weight: 800; color: var(--ink);
-  border-top: 2px solid var(--rule-strong); border-bottom: 0;
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
-}
-.syl-official__fine {
-  margin: var(--sp-3) 0 0; font-size: var(--step--2);
-  color: var(--muted); line-height: 1.55;
-}
-.syl-official .g-tablewrap { background: var(--surface); }
 
 /* ---- scroll affordance.
    A table that scrolls with no visual cue reads as a table that is simply cut
@@ -1814,10 +1791,42 @@ body {
     var(--surface);
 }
 
-/* On a narrow phone, Medium is the column to lose first: it is one character
-   wide, and the footnote directly beneath already explains it. */
-@media (max-width: 430px) {
-  .syl-st__med, .syl-st thead th:nth-child(3), .syl-st__total td:nth-child(3) { display: none; }
-  .syl-st th, .syl-st td { padding-inline: var(--sp-2); }
-  .syl-st__name { min-width: 7.5rem; }
+
+
+/* ---- exam structure table.
+   Four columns, sized so the whole thing fits a 320px screen without scrolling.
+   The test name takes whatever is left after the three numeric columns claim
+   exactly what they need — that is what keeps it from overflowing on a phone
+   while still looking deliberate on a desktop. */
+.syl-st { margin-top: var(--sp-3); table-layout: fixed; width: 100%; }
+.syl-st th, .syl-st td { padding: var(--sp-2) var(--sp-2); }
+
+.syl-st__name { width: auto; white-space: normal; word-break: break-word; hyphens: auto; }
+.syl-st__n    { width: 3.4rem; text-align: right; font-variant-numeric: tabular-nums; }
+.syl-st__time { width: 4.6rem; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.syl-st thead th { vertical-align: bottom; }
+.syl-st thead .syl-st__n, .syl-st thead .syl-st__time { text-align: right; }
+
+.syl-st__seq {
+  display: block; font-size: 0.56rem; font-weight: 800;
+  letter-spacing: 0.06em; color: var(--warn); margin-top: 2px;
+  white-space: nowrap;
+}
+.syl-st__total th, .syl-st__total td {
+  font-weight: 800; color: var(--ink);
+  border-top: 2px solid var(--rule-strong); border-bottom: 0;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.syl-official__fine {
+  margin: var(--sp-3) 0 0; font-size: var(--step--2);
+  color: var(--muted); line-height: 1.55;
+}
+.syl-official .g-tablewrap { background: var(--surface); }
+
+/* Below ~360px every unit label is dropped to its shortest honest form. */
+@media (max-width: 360px) {
+  .syl-st th, .syl-st td { padding-inline: 6px; font-size: 0.68rem; }
+  .syl-st__n    { width: 2.7rem; }
+  .syl-st__time { width: 3.8rem; }
+  .syl-official { padding: var(--sp-3); }
 }

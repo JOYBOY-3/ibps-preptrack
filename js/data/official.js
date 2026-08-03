@@ -82,8 +82,9 @@ export const MAINS = {
  * English Language is always in English; the rest are bilingual by state.
  */
 export const MEDIUM_NOTE =
-  '* Available in English, Hindi and your state\'s language. Where the English and translated ' +
-  'versions differ, the English version prevails.';
+  'English Language is examined in English only. Every other test is available in English, Hindi ' +
+  'and your state\'s language — and where the English and translated versions differ, the English ' +
+  'version prevails.';
 
 /** Clause E — applies to BOTH papers. */
 export const NEGATIVE_MARK = 0.25;
