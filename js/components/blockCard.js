@@ -25,7 +25,10 @@ function resourceRow(resourceId) {
 
 export function blockCard(block, { done, isNext, onToggle, locked = false }) {
   const topic = block.topicId ? TOPIC_BY_ID[block.topicId] : null;
-  const subject = block.subject;
+  // Take the subject from the TOPIC when there is one. Computer Awareness occupies
+  // the Reasoning slot because that is exactly where it sits in the real paper —
+  // but it should still read as Computer Awareness, in its own colour.
+  const subject = topic?.subject || block.subject;
   const meta = subject ? SUBJECT_META[subject] : null;
   const keyVar = subject ? `var(--${subject})` : 'var(--neutral-key)';
 

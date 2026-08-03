@@ -8,7 +8,7 @@
 
 import { el } from '../utils/dom.js';
 import { icon } from '../components/icons.js';
-import { CURRICULUM, DAY_BY_NUMBER } from '../data/curriculum.js';
+import { CURRICULUM, DAY_BY_NUMBER, weekNumberFor, weekRange, TOTAL_WEEKS } from '../data/curriculum.js';
 import { TOPIC_BY_ID, SUBJECT_META } from '../data/topics.js';
 import { getState } from '../state/store.js';
 import { dayProgress, currentDayNumber } from '../state/selectors.js';
@@ -29,9 +29,10 @@ function topicFor(day, subject) {
   return block?.topicId ? TOPIC_BY_ID[block.topicId] : null;
 }
 
+/** Sunday-anchored, shared with the curriculum so the app agrees with itself. */
 function weekOf(n) {
-  const start = (n - 1) * 7 + 1;
-  return CURRICULUM.filter(d => d.day >= start && d.day < start + 7);
+  const { from, to } = weekRange(n);
+  return CURRICULUM.filter(d => d.day >= from && d.day <= to);
 }
 
 function dayCell(day, subject) {
@@ -39,8 +40,11 @@ function dayCell(day, subject) {
   if (!topic) {
     return el('td.wk-cell', {}, [el('span.wk-empty', { text: '—' })]);
   }
+  // Colour by the TOPIC's subject: a Computer Awareness module legitimately sits
+  // in the Reasoning column, because that is where it sits in the real paper.
+  const key = topic.subject || subject;
   return el('td.wk-cell', {}, [
-    el('a.wk-topic', { href: `#/today/${day.day}`, style: `--key:var(--${subject})` }, [
+    el('a.wk-topic', { href: `#/today/${day.day}`, style: `--key:var(--${key})` }, [
       el('span.wk-topic__name', { text: topic.name }),
       topic.tier === 1 ? el('span.wk-tier', { text: 'T1' }) : null
     ])
@@ -55,8 +59,9 @@ function dayCard(day, state, today) {
   const rows = SUBJECTS.map(s => {
     const topic = topicFor(day, s);
     if (!topic) return null;
-    return el('div.wk-row', { style: `--key:var(--${s})` }, [
-      el('span.wk-row__key', { text: SUBJECT_META[s].short }),
+    const key = topic.subject || s;
+    return el('div.wk-row', { style: `--key:var(--${key})` }, [
+      el('span.wk-row__key', { text: SUBJECT_META[key]?.short || SUBJECT_META[s].short }),
       el('span.wk-row__name', { text: topic.name })
     ]);
   }).filter(Boolean);
@@ -82,8 +87,8 @@ function dayCard(day, state, today) {
 export function weekView(weekNumber) {
   const state = getState();
   const today = currentDayNumber();
-  const totalWeeks = Math.ceil(CURRICULUM.length / 7);
-  const n = Math.min(totalWeeks, Math.max(1, weekNumber || Math.ceil(today / 7)));
+  const totalWeeks = TOTAL_WEEKS;
+  const n = Math.min(totalWeeks, Math.max(1, weekNumber || weekNumberFor(today)));
   const days = weekOf(n);
   if (!days.length) return el('div.placeholder', {}, ['That week is outside the plan.']);
 
@@ -163,7 +168,7 @@ export function weekView(weekNumber) {
       type: 'button', disabled: n <= 1,
       onclick: () => { location.hash = `#/week/${n - 1}`; }
     }, ['← Week ' + (n - 1)]),
-    n !== Math.ceil(today / 7)
+    n !== weekNumberFor(today)
       ? el('button.btn.btn--sm', { type: 'button', onclick: () => { location.hash = '#/week'; } },
           ['This week'])
       : null,

@@ -73,6 +73,7 @@
 .chip--quant     { background: var(--quant-soft);     color: var(--quant); }
 .chip--english   { background: var(--english-soft);   color: var(--english); }
 .chip--ga        { background: var(--ga-soft);        color: var(--ga); }
+.chip--computer  { background: var(--computer-soft);  color: var(--computer); }
 
 /* ---------------------------------------------------------------- progress dots */
 .dots { display: flex; align-items: center; gap: 6px; }
@@ -1304,4 +1305,106 @@ body {
 .practice__grid span {
   font-size: var(--step--2); font-weight: 700;
   letter-spacing: var(--tracking-wide); text-transform: uppercase; color: var(--muted);
+}
+
+/* ============================================================================
+   Premium refinement pass.
+
+   The pattern iOS gets right and most web apps get wrong: the primary action is
+   obvious without being loud, secondary controls recede rather than compete, and
+   nothing wraps into a ragged second line. Weight is spent on hierarchy, not on
+   saturation.
+   ========================================================================== */
+
+/* ---- primary action: confident, not shouty -------------------------------- */
+.btn--primary {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--accent) 96%, #fff),
+    color-mix(in srgb, var(--accent) 88%, #000));
+  border-color: color-mix(in srgb, var(--accent) 80%, #000);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent),
+    0 1px 2px color-mix(in srgb, var(--accent) 30%, transparent),
+    0 6px 16px -6px color-mix(in srgb, var(--accent) 55%, transparent);
+  font-weight: 700;
+  letter-spacing: -0.008em;
+}
+.btn--primary:hover {
+  background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 80%, #000));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 26%, transparent),
+    0 2px 4px color-mix(in srgb, var(--accent) 34%, transparent),
+    0 10px 24px -8px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+/* Completed reads as settled, not as another call to action. */
+.btn--done {
+  background: color-mix(in srgb, var(--good) 12%, transparent);
+  border-color: color-mix(in srgb, var(--good) 34%, transparent);
+  color: var(--good);
+  box-shadow: none;
+  font-weight: 650;
+}
+
+/* ---- actions never wrap into a ragged second line ------------------------- */
+.block-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: var(--sp-2);
+  align-items: stretch;
+}
+.block-actions .btn { flex: none; width: 100%; min-height: 46px; padding-inline: var(--sp-3); }
+.block-actions .btn--ghost { font-size: var(--step--1); }
+/* A card with only one action (no topic) gives it the full width. */
+.block-actions:has(> .btn:only-child) { grid-template-columns: 1fr; }
+
+@media (max-width: 380px) {
+  .block-actions { grid-template-columns: 1fr; }
+}
+
+/* ---- revision grading: one tidy row, always -------------------------------- */
+.revision-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: 12px;
+}
+.rev-grade { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 168px; }
+.rev-grade .btn { min-height: 34px; padding-inline: 0; font-size: 0.7rem; font-weight: 700; }
+
+@media (max-width: 400px) {
+  .revision-item { grid-template-columns: 1fr; }
+  .rev-grade { width: 100%; }
+}
+
+/* ---- progress dots: readable at a glance ---------------------------------- */
+.dot { width: 13px; height: 13px; border-width: 2px; }
+.dots { gap: 7px; }
+
+/* ---- breathing room; the single biggest "premium" lever ------------------- */
+.block-list { gap: var(--sp-4); }
+.view { gap: var(--sp-5); }
+.day-head { padding: var(--sp-5) var(--sp-4); gap: var(--sp-4); }
+.block-card { padding: var(--sp-5) var(--sp-4); }
+
+/* ---- day header: the one place a flourish is earned ----------------------- */
+.day-number { font-size: var(--step-4); line-height: 1; }
+.day-date { font-size: var(--step-1); font-weight: 500; letter-spacing: var(--tracking-snug); }
+.day-title { align-items: baseline; gap: var(--sp-3); }
+
+/* ---- secondary text recedes ---------------------------------------------- */
+.block-note { line-height: 1.55; }
+.resource__icon { opacity: 0.75; }
+.block-resources { gap: var(--sp-3); padding-top: var(--sp-4); }
+
+/* ---- chips: quieter, so the title leads ----------------------------------- */
+.chip { padding: 4px 9px; font-size: 0.7rem; letter-spacing: 0.012em; }
+.block-meta { gap: var(--sp-2); margin-top: var(--sp-4); }
+
+/* ---- focus that looks designed, not defaulted ----------------------------- */
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 85%, transparent);
+  outline-offset: 3px;
 }

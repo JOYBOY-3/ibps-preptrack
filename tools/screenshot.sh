@@ -55,11 +55,17 @@ trap cleanup EXIT
 sleep 1.5
 
 shoot() { # view theme WxH name
+  # A FRESH profile every shot. Reusing one leaves a registered service worker
+  # behind, which then serves the previous build's cached bundle and you spend an
+  # hour debugging a change that actually shipped fine.
+  local PROFILE
+  PROFILE="$(mktemp -d)"
   timeout 60 "$CHROME" --headless --no-sandbox --disable-gpu --disable-dev-shm-usage \
-    --user-data-dir="/tmp/preptrack-shot-$4" --window-size="$3" \
+    --user-data-dir="$PROFILE" --window-size="$3" \
     --virtual-time-budget=9000 --hide-scrollbars \
     --screenshot="$OUT/$4.png" \
     "http://localhost:$PORT/$SEED?v=$1&t=$2" 2>/dev/null || true
+  rm -rf "$PROFILE"
   printf "  %-18s %8s bytes\n" "$4.png" "$(stat -c%s "$OUT/$4.png" 2>/dev/null || echo 0)"
 }
 

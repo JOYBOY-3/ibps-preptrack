@@ -49,6 +49,8 @@
   --english-soft:   #ddf0e6;
   --ga:             #8a5210;
   --ga-soft:        #f9efdf;
+  --computer:       #1f5fa8;
+  --computer-soft:  #e2ecf8;
   --neutral-key:    #5e7279;
   --neutral-soft:   #e8eef0;
 
@@ -139,6 +141,8 @@
     --english-soft:   #0d2a1d;
     --ga:             #e0aa5f;
     --ga-soft:        #2f2510;
+    --computer:       #6aa8e8;
+    --computer-soft:  #0f2438;
     --neutral-key:    #7d92a0;
     --neutral-soft:   #18222c;
 
@@ -166,6 +170,7 @@
   --quant: #bb9fe6;    --quant-soft: #221c34;
   --english: #4fcb8b;  --english-soft: #0d2a1d;
   --ga: #e0aa5f;       --ga-soft: #2f2510;
+  --computer: #6aa8e8; --computer-soft: #0f2438;
   --neutral-key: #7d92a0; --neutral-soft: #18222c;
   --shadow-1: 0 1px 2px rgb(0 0 0 / 45%), inset 0 1px 0 rgb(255 255 255 / 4%);
   --shadow-2: 0 2px 6px rgb(0 0 0 / 45%), 0 12px 30px rgb(0 0 0 / 38%),
@@ -188,6 +193,7 @@
   --quant: #6a4a92;    --quant-soft: #ede8f5;
   --english: #1f7a45;  --english-soft: #ddf0e6;
   --ga: #8a5210;       --ga-soft: #f9efdf;
+  --computer: #1f5fa8; --computer-soft: #e2ecf8;
   --neutral-key: #5e7279; --neutral-soft: #e8eef0;
   --shadow-1: 0 1px 1px rgb(11 22 32 / 4%), 0 2px 4px rgb(11 22 32 / 4%);
   --shadow-2: 0 1px 2px rgb(11 22 32 / 5%), 0 4px 10px rgb(11 22 32 / 6%),

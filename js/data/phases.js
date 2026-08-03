@@ -7,12 +7,21 @@
  * 2.50 marks per minute in Mains against English's 1.14.
  */
 
-export const START_DATE = '2026-08-03';
-export const TOTAL_DAYS = 147;
+export const START_DATE = '2026-08-05';   // Wednesday
+export const TOTAL_DAYS = 145;            // 5 Aug -> 27 Dec inclusive
+
+/**
+ * Review days fall on SUNDAYS inside the 45-day syllabus phase.
+ *
+ * Anchoring to the weekend rather than to "every 7th day" matters: a review day
+ * is heavier than a study day, and asking someone to do it on a random Tuesday
+ * is how it gets skipped.
+ */
+export const P1_REVIEW_DAYS = [5, 12, 19, 26, 33, 40];
 
 export const KEY_DATES = [
   { id: 'application', label: 'Application deadline', date: '2026-08-21' },
-  { id: 'syllabus',    label: 'Syllabus closes',      date: '2026-09-16' },
+  { id: 'syllabus',    label: 'Syllabus closes',      date: '2026-09-18' },
   { id: 'prelims',     label: 'PRELIMS',              date: '2026-10-10' },
   { id: 'mains',       label: 'MAINS',                date: '2026-12-27' }
 ];
@@ -44,7 +53,7 @@ export const PHASES = [
     id: 'P2',
     name: 'Prelims Mock Mode',
     tagline: 'One full mock daily. No new topics — test what you have.',
-    from: 46, to: 68,
+    from: 46, to: 66,
     blocks: [
       { id: 'mock',  label: 'Full mock',              minutes: 60, subject: null,
         note: 'Exam conditions. Same time every day. No pausing, no phone.' },
@@ -64,14 +73,14 @@ export const PHASES = [
     id: 'EXAM1',
     name: 'Prelims',
     tagline: 'Two rounds per section · 45-second rule · never guess blindly.',
-    from: 69, to: 70,
+    from: 67, to: 68,
     blocks: []
   },
   {
     id: 'P3',
     name: 'Mains Foundation',
     tagline: 'Mains-only topics at depth. Mains alone decides your rank.',
-    from: 71, to: 98,
+    from: 69, to: 96,
     blocks: [
       { id: 'calc',  label: 'Calculation drill',      minutes: 15, subject: 'quant',
         note: 'Maintenance only. Keep the speed you built.' },
@@ -91,7 +100,7 @@ export const PHASES = [
     id: 'P4',
     name: 'Mains Mock Engine',
     tagline: 'Mains mocks 4–5× a week. GA consolidation begins.',
-    from: 99, to: 126,
+    from: 97, to: 124,
     // Four build days and three mock days a week. A single fixed template cannot
     // hold both: a real Mains paper is 120-125 minutes, so a 60-minute "full
     // length mock" block was a lie that would leave you never having sat the
@@ -121,7 +130,7 @@ export const PHASES = [
     id: 'P5',
     name: 'Mains Final',
     tagline: 'Daily mocks + three full GA revision passes. Taper at the end.',
-    from: 127, to: 146,
+    from: 125, to: 144,
     blocks: [
       { id: 'ga',    label: 'GA revision pass',       minutes: 60, subject: 'ga',
         note: 'Three complete passes over the six-month window before exam day.' },
@@ -147,7 +156,7 @@ export const PHASES = [
     id: 'EXAM2',
     name: 'Mains',
     tagline: 'GA first — 50 marks in 20 minutes, pure recall.',
-    from: 147, to: 147,
+    from: 145, to: 145,
     blocks: []
   }
 ];

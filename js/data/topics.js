@@ -128,6 +128,17 @@ const RAW = {
     ['e-mixed',           'Mixed English sectional',                      2, 0, 0, 40],
     ['e-sectional',       'English sectional',                            2, 0, 0, 40]
   ],
+  // Computer Awareness sits INSIDE the Mains "Reasoning Ability & Computer Aptitude"
+  // section, so these questions are worth 1.50 marks each — the highest in the paper.
+  // ~5 questions, and pure recall: their real value is the time they DON'T consume.
+  computer: [
+    ['comp-fundamentals', 'Computer fundamentals — hardware, memory, generations', 2, 0, 5, 60],
+    ['comp-os',           'Operating systems & MS Office',                        2, 0, 5, 60],
+    ['comp-network',      'Networking & internet',                                2, 0, 5, 60],
+    ['comp-security',     'Computer security & cyber threats',                    2, 0, 5, 50],
+    ['comp-database',     'Database basics & abbreviations',                      2, 0, 5, 50],
+    ['comp-banking',      'Computing in banking — CBS, payment rails, CTS',       2, 0, 5, 50]
+  ],
   ga: [
     ['ga-rbi',            'RBI — structure & functions',                  2, 0, 11, 0],
     ['ga-rates',          'Policy rates — repo, reverse repo, CRR, SLR, MSF', 2, 0, 11, 0],
@@ -190,6 +201,7 @@ export const SUBJECT_META = {
   reasoning: { label: 'Reasoning', short: 'REAS', varName: '--reasoning' },
   quant:     { label: 'Quantitative', short: 'QUANT', varName: '--quant' },
   english:   { label: 'English', short: 'ENG', varName: '--english' },
+  computer:  { label: 'Computer Awareness', short: 'COMP', varName: '--computer' },
   ga:        { label: 'General Awareness', short: 'GA', varName: '--ga' }
 };
 

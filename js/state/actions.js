@@ -3,6 +3,7 @@
 import { update, replaceState } from './store.js';
 import { DAY_BY_NUMBER } from '../data/curriculum.js';
 import { todayISO, addDays, iso } from '../utils/dates.js';
+import { currentDayNumber } from './selectors.js';
 
 /**
  * Spaced repetition ladder.
@@ -36,17 +37,25 @@ function ensureTopic(draft, topicId) {
   return draft.topics[topicId];
 }
 
+/**
+ * A day is "future" when it is past the day you have actually reached.
+ *
+ * Deliberately NOT a raw date comparison. currentDayNumber() clamps to day 1
+ * before the plan's start date, so someone who opens the app on 3 August can
+ * still work Day 1 rather than being told to come back on the 5th. The guard
+ * exists to stop all 145 days being ticked in an afternoon, not to police
+ * enthusiasm.
+ */
 export function isFutureDay(dayNumber) {
-  const d = DAY_BY_NUMBER[dayNumber];
-  return Boolean(d && d.date > todayISO());
+  return dayNumber > currentDayNumber();
 }
 
 export function toggleBlock(dayNumber, blockId) {
   return update(draft => {
     const curriculumDay = DAY_BY_NUMBER[dayNumber];
-    // A day you have not lived through yet cannot be complete. Without this the
-    // whole tracker is decorative: 147 days can be ticked in an afternoon.
-    if (curriculumDay && curriculumDay.date > todayISO()) return draft;
+    // A day you have not reached yet cannot be complete. Without this the whole
+    // tracker is decorative: 145 days could be ticked in an afternoon.
+    if (dayNumber > currentDayNumber()) return draft;
     const day = ensureDay(draft, dayNumber);
     const nowDone = !day.blocks[blockId];
     day.blocks[blockId] = nowDone;

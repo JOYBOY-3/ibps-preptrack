@@ -5,67 +5,74 @@
  * Every day resolves to: date, phase, week, type, topic assignments and blocks.
  */
 
-import { START_DATE, TOTAL_DAYS, PHASES, phaseForDay } from './phases.js';
+import { START_DATE, TOTAL_DAYS, PHASES, phaseForDay, P1_REVIEW_DAYS } from './phases.js';
 import { addDays, iso, formatShort, weekdayShort } from '../utils/dates.js';
 
 // ------------------------------------------------------------------ P1 · days 1–45
-// [reasoning, quant, english, ga] — null marks a review day
-const P1 = [
+// The 39 STUDY-day assignments, in weightage + motivation order.
+// Review days are positional (Sundays) and are inserted by buildDay, so this array
+// no longer carries nulls — the schedule can be re-anchored to any start date
+// without re-cutting the topic sequence.
+// [reasoning, quant, english, ga]
+const P1_STUDY = [
   ['r-linear-single', 'q-calc',           'e-tenses',         'ga-rbi'],
   ['r-linear-double', 'q-simpl-2',        'e-sva',            'ga-rates'],
   ['r-circular',      'q-numsys',         'e-articles',       'ga-banktypes'],
   ['r-polygon',       'q-percentage',     'e-noun',           'ga-regulators'],
   ['r-inequality',    'q-ratio',          'e-adjective',      'ga-devbanks'],
   ['r-syllogism',     'q-average',        'e-rc-technique',   'ga-payments'],
-  null,
   ['r-box',           'q-ages',           'e-cloze',          'ga-accounts'],
   ['r-floor',         'q-pld-1',          'e-error-1',        'ga-negotiable'],
   ['r-floor-flat',    'q-pld-2',          'e-error-2',        'ga-npa'],
   ['r-dmy',           'q-si',             'e-improvement',    'ga-moneymarket'],
   ['r-category',      'q-ci',             'e-phrase',         'ga-capitalmarket'],
   ['r-uncertain',     'q-timework',       'e-fillers',        'ga-inclusion'],
-  null,
   ['r-series-alpha',  'q-pipes',          'e-parajumble',     'ga-mudra'],
   ['r-series-num',    'q-tsd',            'e-sent-rearr',     'ga-insurance'],
   ['r-coding',        'q-boats',          'e-wordswap',       'ga-budget'],
   ['r-coding-chinese','q-trains',         'e-wordrearr',      'ga-survey'],
   ['r-blood',         'q-di-table',       'e-wordusage',      'ga-intl-org'],
   ['r-direction',     'q-di-bar',         'e-oddone',         'ga-static-hq'],
-  null,
   ['r-order',         'q-di-line',        'e-idioms',         'ga-static-cap'],
   ['r-wordpair',      'q-di-pie',         'e-matchcol',       'ga-days'],
   ['r-coded-ineq',    'q-di-caselet',     'e-connectors',     'ga-awards'],
   ['r-syllogism-rev', 'q-di-missing',     'e-cloze-replace',  'ga-appointments'],
   ['r-coded-blood',   'q-mixture',        'e-error-double',   'ga-summits'],
   ['r-coded-dir',     'q-partnership',    'e-paracompletion', 'ga-sports'],
-  null,
   ['r-io-1',          'q-series-missing', 'e-coherent',       'ga-defence'],
   ['r-io-2',          'q-series-wrong',   'e-inference',      'ga-scitech'],
   ['r-ds-2',          'q-quadratic',      'e-phrase-swap',    'ga-books'],
   ['r-ds-3',          'q-quantity',       'e-rc-multi',       'ga-schemes-rev'],
   ['r-assumption',    'q-di-arith',       'e-rc-econ',        'ga-ranks'],
   ['r-inference',     'q-di-new',         'e-rc-social',      'ga-agreements'],
-  null,
   ['r-coa',           'q-ds',             'e-cloze-mains',    'ga-state'],
   ['r-triple-row',    'q-mensuration-2d', 'e-error-mains',    'ga-committees'],
   ['r-inscribed',     'q-mensuration-3d', 'e-rc-long',        'ga-circulars'],
   ['r-blood-seating', 'q-permutation',    'e-vocab',          'ga-national-rev'],
   ['r-puzzle-marathon','q-probability',   'e-mixed',          'ga-intl-rev'],
   ['r-sectional',     'q-sectional',      'e-sectional',      'ga-banking-rev'],
-  null,
   ['AUDIT',           null,               null,               'ga-audit'],
   ['MOCK6',           null,               null,               'ga-errorbook'],
   ['WEAK',            null,               null,               'ga-6week-rev']
 ];
 
 const P1_REVIEW = {
-  7:  'Review day — 3 sectionals, week consolidation',
-  14: 'Review + FULL MOCK #1',
-  21: 'Review + FULL MOCK #2',
-  28: 'Review + FULL MOCK #3',
-  35: 'Review + FULL MOCK #4',
-  42: 'Review + FULL MOCK #5'
+  5:  'Review day — 3 sectionals, week consolidation',
+  12: 'Review + FULL MOCK #1',
+  19: 'Review + FULL MOCK #2',
+  26: 'Review + FULL MOCK #3',
+  33: 'Review + FULL MOCK #4',
+  40: 'Review + FULL MOCK #5'
 };
+
+const REVIEW_SET = new Set(P1_REVIEW_DAYS);
+
+/** Index into P1_STUDY for a given P1 day, skipping the review days before it. */
+function studyIndexFor(day) {
+  let skipped = 0;
+  for (const r of P1_REVIEW_DAYS) if (r < day) skipped++;
+  return day - skipped - 1;
+}
 
 const P1_SPECIAL = {
   43: { type: 'audit', headline: 'Syllabus audit',
@@ -76,9 +83,31 @@ const P1_SPECIAL = {
         detail: 'Syllabus officially closed at the end of today.' }
 };
 
-const P1_WEEK_THEME = ['Foundations', 'Puzzles + Arithmetic Core', 'Speed Topics + DI Opens',
-                       'DI Depth + Prelims Closeout', 'Mains-Specific Block',
-                       'Hard Depth + Leftovers', 'Close It Out'];
+/**
+ * Weeks are Sunday-anchored, not "every 7 days from the start".
+ *
+ * Day 1 is a Wednesday, so week 1 is a short 5-day week (Wed 5 – Sun 9 Aug) and
+ * every week after is Mon–Sun. This has to be shared: if the Week screen chunks
+ * by 7 while the themes and review days anchor to Sundays, the app disagrees with
+ * itself about what "week 1" means.
+ */
+export function weekNumberFor(day) {
+  return day <= 5 ? 1 : Math.ceil((day - 5) / 7) + 1;
+}
+
+export function weekRange(week) {
+  if (week <= 1) return { from: 1, to: 5 };
+  const from = 5 + (week - 2) * 7 + 1;
+  return { from, to: Math.min(TOTAL_DAYS, from + 6) };
+}
+
+export const TOTAL_WEEKS = weekNumberFor(TOTAL_DAYS);
+
+const P1_WEEK_BOUNDS = [5, 12, 19, 26, 33, 40, 45];
+const P1_WEEK_THEME = ['Foundations', 'Puzzle types + arithmetic core', 'Speed topics + DI opens',
+                       'DI depth + Prelims closeout', 'Mains-only block',
+                       'Hard depth + leftovers', 'Close it out'];
+const weekThemeFor = day => P1_WEEK_THEME[P1_WEEK_BOUNDS.findIndex(b => day <= b)] || 'Close it out';
 
 // ------------------------------------------------------------------ P2 · days 46–68
 // Prelims mock mode. Weak-area focus rotates; GA continues daily.
@@ -123,6 +152,14 @@ const P3 = [
   ['r-sectional',     'q-sectional',   'e-sectional',       'ga-defence'],
   ['r-io-2',          'q-di-table',    'e-rc-long',         'ga-scitech'],
   ['r-assumption',    'q-di-bar',      'e-rc-econ',         'ga-banking-rev']
+];
+
+// Six Computer Awareness modules, spread across the middle of P3 so each gets
+// revisited by the spaced-repetition ladder before 27 December.
+const P3_COMPUTER_DAYS = [8, 11, 14, 17, 20, 23];
+const P3_COMPUTER = [
+  'comp-fundamentals', 'comp-os', 'comp-network',
+  'comp-security', 'comp-database', 'comp-banking'
 ];
 
 // ------------------------------------------------------------------ P4 · days 99–126
@@ -222,7 +259,7 @@ function buildDay(day) {
     weekday: weekdayShort(date),
     phaseId: phase.id,
     phaseName: phase.name,
-    week: Math.ceil(day / 7),
+    week: weekNumberFor(day),
     type: 'study',
     headline: null,
     detail: null,
@@ -232,11 +269,10 @@ function buildDay(day) {
 
   // ---------------------------------------------------------------- P1
   if (phase.id === 'P1') {
-    const idx = day - 1;
-    const assign = P1[idx];
-    base.weekTheme = P1_WEEK_THEME[Math.min(Math.floor(idx / 7), 6)];
+    const assign = REVIEW_SET.has(day) ? null : P1_STUDY[studyIndexFor(day)];
+    base.weekTheme = weekThemeFor(day);
 
-    if (assign === null) {
+    if (assign === null || assign === undefined) {
       base.type = 'review';
       base.headline = P1_REVIEW[day];
       base.detail = 'Consolidation day — not a rest day. Mock, analysis, 20 mixed questions per topic, ' +
@@ -269,12 +305,12 @@ function buildDay(day) {
   // ---------------------------------------------------------------- P2
   else if (phase.id === 'P2') {
     const i = day - 46;
-    base.weekTheme = day >= 66 ? 'Taper' : 'Prelims Mock Mode';
-    base.type = day >= 66 ? 'taper' : 'mock';
-    base.headline = day >= 66
+    base.weekTheme = day >= 64 ? 'Taper' : 'Prelims Mock Mode';
+    base.type = day >= 64 ? 'taper' : 'mock';
+    base.headline = day >= 64
       ? 'Taper — mocks + error notebook only. No new material.'
-      : `Mock day ${i + 1} of 23`;
-    base.detail = day >= 66
+      : `Mock day ${i + 1} of 21`;
+    base.detail = day >= 64
       ? 'Sleep eight hours. Match your real shift time. Cut to two hours in the last three days.'
       : 'One full mock, analysed harder than it was taken. No new topics from here.';
     base.blocks = blocksFor(day, phase, [null, null, null, P2_GA[i % P2_GA.length]], {
@@ -285,7 +321,7 @@ function buildDay(day) {
   // ---------------------------------------------------------------- exams
   else if (phase.id === 'EXAM1') {
     base.type = 'exam';
-    base.headline = day === 69 ? 'PRELIMS — Day 1' : 'PRELIMS — Day 2';
+    base.headline = day === 67 ? 'PRELIMS — Day 1' : 'PRELIMS — Day 2';
     base.detail = 'Two rounds per section · 45-second rule · never guess blindly (0.25 negative) · ' +
                   'English 22–26 · Numerical 26–30 · Reasoning 28–32, all at 90%+ accuracy.';
   }
@@ -298,9 +334,22 @@ function buildDay(day) {
 
   // ---------------------------------------------------------------- P3
   else if (phase.id === 'P3') {
-    const i = day - 71;
+    const i = day - 69;
     base.weekTheme = 'Mains Foundation';
-    base.blocks = blocksFor(day, phase, P3[i]);
+
+    /**
+     * Computer Awareness occupies the Reasoning slot on six days.
+     *
+     * That is not a compromise — it is exactly where it sits in the real paper:
+     * the Mains section is "Reasoning Ability & Computer Aptitude", one 40-question
+     * 60-mark block. Placing it mid-phase leaves room for two revision passes
+     * before Mains, and it is pure recall so it does not need a run-up.
+     */
+    const assign = [...P3[i]];
+    const ci = P3_COMPUTER_DAYS.indexOf(i);
+    if (ci !== -1) assign[0] = P3_COMPUTER[ci];
+
+    base.blocks = blocksFor(day, phase, assign);
     if ((i + 1) % 7 === 0) {
       base.type = 'review';
       base.headline = 'Mains review — 2 sectionals + full GA week revision';
@@ -309,8 +358,8 @@ function buildDay(day) {
 
   // ---------------------------------------------------------------- P4
   else if (phase.id === 'P4') {
-    const i = day - 99;
-    // Mon/Wed/Sat are full-length mock days; the rest are build days. Three real
+    const i = day - 97;
+    // Three full-length mock days a week; the rest are build days. Three real
     // 125-minute mocks a week trains the stamina the paper actually demands.
     const isMockDay = [0, 2, 5].includes(i % 7);
     // Advance the topic rotations on BUILD days only. Indexing by raw day number
@@ -333,8 +382,8 @@ function buildDay(day) {
 
   // ---------------------------------------------------------------- P5
   else if (phase.id === 'P5') {
-    const i = day - 127;
-    const taper = day >= 144;
+    const i = day - 125;
+    const taper = day >= 142;
     const isMockDay = !taper && [0, 2, 4, 6].includes(i % 7);
     let bi = 0;
     for (let k = 0; k < i; k++) if (![0, 2, 4, 6].includes(k % 7)) bi++;
@@ -366,13 +415,14 @@ export const DAY_BY_DATE = Object.fromEntries(CURRICULUM.map(d => [d.date, d]));
 // milestones attached after generation so dates stay the single source of truth
 const MILESTONES = {
   '2026-08-21': 'IBPS application deadline — submit today if you have not',
-  '2026-09-16': 'Syllabus closed. Mock mode begins tomorrow.',
+  '2026-09-18': 'Syllabus closed. Mock mode begins tomorrow.',
   '2026-10-09': 'Last day before Prelims. Sleep early.',
   '2026-12-26': 'Last day before Mains. Light revision only.'
 };
 for (const d of CURRICULUM) {
   if (MILESTONES[d.date]) d.milestone = MILESTONES[d.date];
 }
-CURRICULUM[27].milestone = 'Prelims syllabus 100% complete';
+// day 26 is the Sunday that closes the Prelims-core weeks
+CURRICULUM[25].milestone = 'Prelims core secure — Mains-only topics begin';
 
 export { PHASES };
