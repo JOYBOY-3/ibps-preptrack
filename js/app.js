@@ -21,6 +21,8 @@ import { gateView } from './views/gate.js';
 import { hasSignedInBefore, initAuth } from './sync/googleAuth.js';
 import { initSyncListeners, markDirty, syncOnGesture, onSyncStatus } from './sync/syncEngine.js';
 
+export const BUILD = 'v8';
+
 const ROUTES = [
   { id: 'today',    path: '#/today',    label: 'Today',    icon: 'today',    render: todayView },
   { id: 'week',     path: '#/week',     label: 'Week',     icon: 'week',     render: weekView },
@@ -130,7 +132,7 @@ function bootApp() {
         el('span.app-brand__mark', { text: 'PT' }),
         el('span', {}, [
           el('span', { text: 'PrepTrack' }),
-          el('span.app-brand__sub', { text: 'IBPS Clerk 2026' })
+          el('span.app-brand__sub', { text: `IBPS Clerk 2026 · ${BUILD}` })
         ])
       ]),
       el('div.header-actions', {}, [
@@ -157,7 +159,20 @@ function bootApp() {
 
   render();
   window.addEventListener('hashchange', render);
-  subscribe(() => { render(); markDirty(); });
+
+  /**
+   * Views are rendered on ROUTE CHANGE only.
+   *
+   * Previously every state change called render(), which replaces the entire
+   * <main>. One block tap rebuilt the day header, the banners, the revision
+   * queue, all six cards and the footer — replaying the entry animation,
+   * jumping the scroll position and destroying focus in any open input. That is
+   * what "the page reloads too much" was.
+   *
+   * State changes now only mark the data dirty for sync. Views that need to
+   * reflect a change patch their own DOM in place.
+   */
+  subscribe(() => markDirty());
 
   // Sync opportunistically on real taps. The Google popup requires transient user
   // activation, so a gesture is the only moment we can legally mint a fresh token.
@@ -179,7 +194,7 @@ function bootApp() {
     navigator.serviceWorker.register('./sw.js').catch(() => { /* offline support is optional */ });
   }
 
-  console.info(`[PrepTrack] Day ${currentDayNumber()} of 147`);
+  console.info(`[PrepTrack] build ${BUILD} · Day ${currentDayNumber()} of 147`);
 }
 
 boot();

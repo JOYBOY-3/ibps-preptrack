@@ -146,6 +146,9 @@ export function mocksView() {
 
     pendingErrors = [];
     toast(`Mock saved — ${total.toFixed(2)} marks. Fix your ${largest} bucket this week.`);
+    // The global re-render is gone by design, so this screen refreshes itself
+    // after a save so the new mock appears in the history immediately.
+    requestAnimationFrame(() => window.dispatchEvent(new HashChangeEvent('hashchange')));
   }
 
   const stageSeg = el('div.seg', { role: 'group', 'aria-label': 'Stage' },

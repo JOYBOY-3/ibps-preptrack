@@ -45,5 +45,9 @@ export const ALLOWED_USERS = [
 /** Name of the single JSON file kept in the user's appDataFolder. */
 export const SYNC_FILENAME = 'preptrack-state.json';
 
-/** Debounce before a change is pushed to Drive, in milliseconds. */
-export const SYNC_DEBOUNCE_MS = 4000;
+/**
+ * Debounce before a change is pushed to Drive.
+ * Short, because the app should behave like Google Docs: you change something,
+ * it says "Saving…", and a moment later it says saved. Four seconds felt broken.
+ */
+export const SYNC_DEBOUNCE_MS = 1500;

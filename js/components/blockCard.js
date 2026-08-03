@@ -74,7 +74,7 @@ export function blockCard(block, { done, isNext, onToggle, locked = false }) {
         onclick: () => { if (!locked) onToggle(block.id); }
       }, [
         icon(done ? 'check' : 'circle'),
-        locked ? 'Not yet' : (done ? 'Completed' : 'Mark complete')
+        el('span.btn-label', { text: locked ? 'Not yet' : (done ? 'Completed' : 'Mark complete') })
       ])
     ])
   ]);

@@ -33,8 +33,22 @@ export function onSyncStatus(fn) {
   return () => listeners.delete(fn);
 }
 
+let watchdog = null;
+
 function setStatus(state, message = '', error = null) {
   status = { state, message, at: new Date().toISOString(), error };
+
+  // Nothing may leave the indicator reading "Saving…" forever. If a sync has not
+  // resolved in 30s, say so honestly rather than spinning at the user.
+  clearTimeout(watchdog);
+  if (state === 'syncing') {
+    watchdog = setTimeout(() => {
+      if (status.state === 'syncing') {
+        inFlight = null;
+        setStatus('pending', 'Taking longer than expected. Your work is safe on this device — tap Sync now to retry.');
+      }
+    }, 30_000);
+  }
   for (const fn of listeners) {
     try { fn(status); } catch (err) { console.error('[preptrack] sync listener threw', err); }
   }
@@ -79,7 +93,7 @@ export async function sync({ interactive = false } = {}) {
   }
 
   if (!navigator.onLine) {
-    setStatus('offline', 'Offline — changes are saved on this device and will sync later.');
+    setStatus('offline', 'Offline — saved on this device, will sync when you reconnect');
     return null;
   }
   if (!isConnected()) {
@@ -101,11 +115,11 @@ export async function sync({ interactive = false } = {}) {
    */
   const run = async () => {
     try {
-      setStatus('syncing', 'Syncing…');
+      setStatus('syncing', 'Saving…');
 
       const token = interactive ? await acquireToken() : getToken();
       if (!token) {
-        setStatus('pending', 'Waiting to sync — tap anything to refresh access.');
+        setStatus('pending', 'Saved here — will reach Drive on your next tap');
         return null;
       }
 
@@ -160,7 +174,7 @@ export async function sync({ interactive = false } = {}) {
       });
 
       dirty = false;
-      setStatus('synced', 'All changes saved to your Google Drive.');
+      setStatus('synced', 'All changes saved to Drive');
       return uploaded;
     } catch (err) {
       const msg = String(err?.message || err);
@@ -258,7 +272,7 @@ export function initSyncListeners() {
   });
 
   window.addEventListener('offline', () => {
-    if (isConnected()) setStatus('offline', 'Offline — changes are saved on this device.');
+    if (isConnected()) setStatus('offline', 'Offline — saved on this device, will sync when you reconnect');
   });
 
   document.addEventListener('visibilitychange', () => {

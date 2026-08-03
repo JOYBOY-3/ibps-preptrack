@@ -20,6 +20,13 @@ import { prefetchSubject } from '../data/mastery.js';
 
 let viewedDay = null;
 
+/**
+ * Refs to the few nodes a block tap actually changes. Patching these in place is
+ * the difference between "ticked a box" and "the page reloaded": the entry
+ * animation does not replay, the scroll position holds, and focus survives.
+ */
+let refs = null;
+
 export function setViewedDay(day) { viewedDay = day; }
 
 function dots(done, total) {
@@ -108,8 +115,8 @@ export function todayView() {
     day.weekTheme ? el('div.muted', { style: 'font-size:var(--step--1);font-weight:600', text: day.weekTheme }) : null,
     el('div.progress-line', {}, [
       dots(prog.done, prog.total),
-      el('span', { text: `${prog.done} of ${prog.total} blocks` }),
-      prog.complete ? el('span.chip.chip--good', { text: 'Day complete' }) : null,
+      el('span.progress-count', { text: `${prog.done} of ${prog.total} blocks` }),
+      el('span.chip.chip--good.day-complete-chip', { text: 'Day complete', hidden: !prog.complete }),
       s > 0 ? el('span.chip', {}, [icon('flame'), ` ${s} day streak`]) : null,
       prelims ? el('span.chip', {}, [icon('clock'), ` ${prelims.daysLeft} days to Prelims`]) : null
     ])
@@ -144,16 +151,22 @@ export function todayView() {
     ])]));
   }
 
-  const cards = day.blocks.map(b => blockCard(b, {
-    done: !!saved.blocks?.[b.id],
-    isNext: !future && firstIncomplete?.id === b.id,
-    locked: future,
-    onToggle: id => {
-      toggleBlock(dayNumber, id);
-      const nowDone = !saved.blocks?.[id];
-      announce(nowDone ? `${b.label} marked complete` : `${b.label} marked incomplete`);
-    }
-  }));
+  const cardEls = new Map();
+  const cards = day.blocks.map(b => {
+    const card = blockCard(b, {
+      done: !!saved.blocks?.[b.id],
+      isNext: !future && firstIncomplete?.id === b.id,
+      locked: future,
+      onToggle: id => {
+        toggleBlock(dayNumber, id);
+        patchDay(dayNumber);
+        const nowDone = Boolean(getState().days[dayNumber]?.blocks?.[id]);
+        announce(nowDone ? `${b.label} marked complete` : `${b.label} marked incomplete`);
+      }
+    });
+    cardEls.set(b.id, card);
+    return card;
+  });
 
   const footer = el('section.card', {}, [
     el('div.card__body', {}, [
@@ -187,6 +200,10 @@ export function todayView() {
     }, ['Next day →'])
   ]);
 
+  const dotsBox = head.querySelector('.dots');
+  const progressLine = head.querySelector('.progress-line');
+  refs = { dayNumber, cardEls, dotsBox, progressLine, blocks: day.blocks };
+
   return el('div.view', {}, [
     head,
     ...banners,
@@ -195,4 +212,39 @@ export function todayView() {
     footer,
     nav
   ]);
+}
+
+/** Update only what a block tap changes. No rebuild, no animation replay. */
+function patchDay(dayNumber) {
+  if (!refs || refs.dayNumber !== dayNumber) return;
+  const state = getState();
+  const saved = state.days[dayNumber] || {};
+  const prog = dayProgress(state, dayNumber);
+  const firstIncomplete = refs.blocks.find(b => !saved.blocks?.[b.id]);
+
+  for (const b of refs.blocks) {
+    const card = refs.cardEls.get(b.id);
+    if (!card) continue;
+    const done = Boolean(saved.blocks?.[b.id]);
+    card.classList.toggle('is-done', done);
+    card.classList.toggle('is-next', !done && firstIncomplete?.id === b.id);
+
+    const btn = card.querySelector('button[aria-pressed]');
+    if (btn) {
+      btn.setAttribute('aria-pressed', done ? 'true' : 'false');
+      btn.classList.toggle('btn--done', done);
+      btn.classList.toggle('btn--primary', !done);
+      const label = btn.querySelector('span.btn-label');
+      if (label) label.textContent = done ? 'Completed' : 'Mark complete';
+    }
+  }
+
+  if (refs.dotsBox) {
+    [...refs.dotsBox.children].forEach((d, i) => d.classList.toggle('is-done', i < prog.done));
+  }
+  const count = refs.progressLine?.querySelector('.progress-count');
+  if (count) count.textContent = `${prog.done} of ${prog.total} blocks`;
+
+  const chip = refs.progressLine?.querySelector('.day-complete-chip');
+  if (chip) chip.hidden = !prog.complete;
 }
