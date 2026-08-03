@@ -173,9 +173,14 @@ export function mocksView() {
 
     pendingErrors = [];
     toast(`Mock saved — ${total.toFixed(2)} marks. Fix your ${largest} bucket this week.`);
-    // The global re-render is gone by design, so this screen refreshes itself
-    // after a save so the new mock appears in the history immediately.
-    requestAnimationFrame(() => window.dispatchEvent(new HashChangeEvent('hashchange')));
+    // A saved mock changes the history list, the chart and the totals, so this
+    // screen genuinely does need rebuilding. Preserve the scroll position across
+    // it — losing your place after saving a mock is disorienting.
+    const y = window.scrollY;
+    requestAnimationFrame(() => {
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      requestAnimationFrame(() => window.scrollTo({ top: y }));
+    });
   }
 
   const stageSeg = el('div.seg', { role: 'group', 'aria-label': 'Stage' },

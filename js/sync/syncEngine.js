@@ -239,17 +239,32 @@ export function disconnectSync() {
  * renew it here: the user taps a block complete, and that same tap silently mints a
  * token and pushes the change. In practice this makes sync feel fully automatic.
  */
+/**
+ * Piggy-back a sync on the user's next tap — but NEVER open a popup from here.
+ *
+ * This used to call sync({ interactive: true }) when the token had lapsed, which
+ * meant: change the theme, and the very same click's pointerup opened a Google
+ * sign-in dialog. The user asked for a colour and got an auth prompt. Any tap
+ * after any edit could do it, on every screen.
+ *
+ * An auth popup the user did not ask for is hostile, and it is the kind of thing
+ * that makes people distrust an app with their Drive. So the gesture path is now
+ * strictly non-interactive: if the token is fresh we push quietly, and if it has
+ * lapsed we say so in the status pip and wait for the user to press Sync now.
+ * Their work is already safe on the device either way.
+ */
 export function syncOnGesture() {
   if (!isConnected() || !navigator.onLine) return;
+  if (!dirty) return;
 
   if (hasFreshToken()) {
-    if (dirty) sync({ interactive: false });
+    sync({ interactive: false });
     return;
   }
-  // Token lapsed and there is work to push — renew inside this gesture.
-  if (dirty && Date.now() - lastInteractiveAttempt > 30_000) {
-    lastInteractiveAttempt = Date.now();
-    sync({ interactive: true }).catch(() => { /* status already set */ });
+
+  // Lapsed. Tell them once, quietly, and stop — do not summon a popup.
+  if (status.state !== 'pending') {
+    setStatus('pending', 'Saved on this device. Open Settings and tap Sync now to reach Drive.');
   }
 }
 

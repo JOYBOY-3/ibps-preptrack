@@ -266,3 +266,39 @@
 @media (min-width: 1440px) {
   .app-main { max-width: 1020px; margin-inline: auto; }
 }
+
+/* ============================================================================
+   Header material.
+
+   It was a flat bar with a hairline. What separates a premium app from a competent
+   one here is that chrome reads as a surface hovering over content, not as a
+   painted strip: translucency, a real blur, and a highlight along the top edge
+   catching light the way a physical panel would.
+   ========================================================================== */
+.app-header {
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: saturate(1.8) blur(20px);
+  -webkit-backdrop-filter: saturate(1.8) blur(20px);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent),
+    0 1px 0 var(--rule);
+  border-bottom: 0;
+}
+@media (prefers-color-scheme: dark) {
+  .app-header { box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%), 0 1px 0 var(--rule); }
+}
+:root[data-theme='dark'] .app-header {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%), 0 1px 0 var(--rule);
+}
+:root[data-theme='light'] .app-header {
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent), 0 1px 0 var(--rule);
+}
+
+/* Same treatment on the bottom bar, which sits over content on a phone. */
+.app-nav {
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 40%, transparent);
+}
+@media (prefers-color-scheme: dark) {
+  .app-nav { box-shadow: inset 0 1px 0 rgb(255 255 255 / 5%); }
+}
+:root[data-theme='dark'] .app-nav { box-shadow: inset 0 1px 0 rgb(255 255 255 / 5%); }

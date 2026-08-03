@@ -7,7 +7,7 @@
  * Advanced as an escape hatch, not as a chore.
  */
 
-import { el } from '../utils/dom.js';
+import { el, announce } from '../utils/dom.js';
 import { icon } from '../components/icons.js';
 import { getState, replaceState } from '../state/store.js';
 import { setTheme, setExamDate, setStateApplied } from '../state/actions.js';
@@ -93,14 +93,31 @@ export function settingsView() {
     ])
   ]);
 
-  // ---------------------------------------------------------------- theme
-  const themeSeg = el('div.seg', { role: 'group', 'aria-label': 'Theme' },
-    ['auto', 'light', 'dark'].map(t => el('button', {
-      type: 'button',
-      'aria-pressed': state.settings.theme === t ? 'true' : 'false',
-      onclick: () => { setTheme(t); applyTheme(t); },
-      text: t[0].toUpperCase() + t.slice(1)
-    })));
+  /**
+   * Theme picker.
+   *
+   * The handler used to be `setTheme(t); applyTheme(t)` and nothing else. Views
+   * only rebuild on route change, so the pressed state never moved — the button
+   * you clicked stayed unstyled until you navigated away and back, or refreshed.
+   * That is why the selection appeared to "work only after a refresh".
+   *
+   * It now updates its own aria-pressed in place and keeps focus where you left
+   * it, which is what makes it feel like one page instead of a form post.
+   */
+  const themeButtons = ['auto', 'light', 'dark'].map(t => el('button', {
+    type: 'button',
+    'aria-pressed': state.settings.theme === t ? 'true' : 'false',
+    dataset: { theme: t },
+    onclick: e => {
+      setTheme(t);
+      applyTheme(t);
+      for (const b of themeButtons) b.setAttribute('aria-pressed', b.dataset.theme === t ? 'true' : 'false');
+      e.currentTarget.focus({ preventScroll: true });
+      announce(`Theme set to ${t}`);
+    },
+    text: t[0].toUpperCase() + t.slice(1)
+  }));
+  const themeSeg = el('div.seg', { role: 'group', 'aria-label': 'Theme' }, themeButtons);
 
   // ---------------------------------------------------------------- advanced
   const fileInput = el('input', {
@@ -214,27 +231,39 @@ function examSection(state) {
   const cd = countdowns(state);
   const row = (id, label, window) => {
     const c = cd.find(x => x.id === id);
+    const desc = el('div.ios-row__desc', {
+      text: set[id]
+        ? `Confirmed · ${c?.daysLeft ?? 0} days away`
+        : `Notification says "${window}" only. Using ${c?.date} for now — ${c?.daysLeft ?? 0} days.`
+    });
     const input = el('input.input', {
       type: 'date', value: set[id] || '',
       min: '2026-08-05', max: '2027-03-31',
       onchange: e => {
         setExamDate(id, e.target.value || null);
         toast(e.target.value ? `${label} set — countdowns updated` : `${label} cleared`);
-        requestAnimationFrame(() => window_reload());
+        // Patch this row, do not rebuild the screen. A full re-render here threw
+        // away focus and scroll position for a two-word text change.
+        const c2 = countdowns(getState()).find(x => x.id === id);
+        desc.textContent = e.target.value
+          ? `Confirmed · ${c2?.daysLeft ?? 0} days away`
+          : `Notification says "${window}" only. Using ${c2?.date} for now — ${c2?.daysLeft ?? 0} days.`;
       }
     });
     return el('div.ios-row.ios-row--stack', {}, [
       el('div.ios-row__text', {}, [
         el('div.ios-row__label', { text: label }),
-        el('div.ios-row__desc', {
-          text: set[id]
-            ? `Confirmed · ${c?.daysLeft ?? 0} days away`
-            : `Notification says "${window}" only. Using ${c?.date} for now — ${c?.daysLeft ?? 0} days.`
-        })
+        desc
       ]),
       input
     ]);
   };
+
+  const stateDesc = el('div.ios-row__desc', {
+    text: state.settings?.stateApplied
+      ? `${VACANCIES.byState[state.settings.stateApplied] ?? '?'} vacancies notified`
+      : 'Clerical recruitment is state-wise — your cut-off is your state\'s cut-off.'
+  });
 
   return el('section.ios-section', {}, [
     el('h2.ios-section__title', { text: 'Your exam' }),
@@ -250,15 +279,16 @@ function examSection(state) {
       el('div.ios-row.ios-row--stack', {}, [
         el('div.ios-row__text', {}, [
           el('div.ios-row__label', { text: 'State you applied for' }),
-          el('div.ios-row__desc', {
-            text: state.settings?.stateApplied
-              ? `${VACANCIES.byState[state.settings.stateApplied] ?? '?'} vacancies notified`
-              : 'Clerical recruitment is state-wise — your cut-off is your state\'s cut-off.'
-          })
+          stateDesc
         ]),
         el('select.select', {
-          onchange: e => { setStateApplied(e.target.value || null); toast('State saved');
-                           requestAnimationFrame(() => window_reload()); }
+          onchange: e => {
+            setStateApplied(e.target.value || null);
+            toast('State saved');
+            stateDesc.textContent = e.target.value
+              ? `${VACANCIES.byState[e.target.value] ?? '?'} vacancies notified`
+              : 'Clerical recruitment is state-wise — your cut-off is your state\'s cut-off.';
+          }
         }, [
           el('option', { value: '', text: 'Not set' }),
           ...Object.keys(VACANCIES.byState).sort().map(n =>
@@ -314,7 +344,5 @@ function officialSection() {
   ]);
 }
 
-/** Re-render after a settings change, since views only rebuild on route change. */
-function window_reload() {
-  globalThis.dispatchEvent(new HashChangeEvent('hashchange'));
-}
+/* window_reload() removed. Every settings control now patches its own row, so
+   nothing here rebuilds the screen and throws away focus and scroll position. */
