@@ -116,6 +116,13 @@ export function todayView() {
     el('div.progress-line', {}, [
       dots(prog.done, prog.total),
       el('span.progress-count', { text: `${prog.done} of ${prog.total} blocks` }),
+      // 240 minutes of STUDY is about 4h25 of clock. Say so, or breaks get taken
+      // out of study time and the plan quietly under-delivers.
+      day.blocks.length
+        ? el('span.muted', { style: 'font-size:var(--step--2)',
+            title: '240 minutes of study plus about 25 minutes of breaks',
+            text: '· 4h 25m with breaks' })
+        : null,
       el('span.chip.chip--good.day-complete-chip', { text: 'Day complete', hidden: !prog.complete }),
       s > 0 ? el('span.chip', {}, [icon('flame'), ` ${s} day streak`]) : null,
       prelims
@@ -154,6 +161,15 @@ export function todayView() {
     banners.push(el('div.banner.banner--accent', {}, [icon('clock', 'banner__icon'), el('div', {}, [
       el('strong', { text: 'This day has not happened yet. ' }),
       'You can read ahead, but blocks can only be ticked on the day itself — a plan you can tick in an afternoon tracks nothing.'
+    ])]));
+  }
+
+  if (day.lighter) {
+    banners.push(el('div.banner.banner--good', {}, [icon('check', 'banner__icon'), el('div', {}, [
+      el('strong', { text: 'Scheduled lighter day. ' }),
+      'If you are running on empty, do the first four blocks and stop. That is not falling ' +
+      'behind — it is the plan. One planned half-day a fortnight is how you avoid the ' +
+      'unplanned collapse that desynchronises everything.'
     ])]));
   }
 

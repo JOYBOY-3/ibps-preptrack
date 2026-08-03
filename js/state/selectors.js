@@ -2,7 +2,7 @@
 
 import { CURRICULUM, DAY_BY_NUMBER, DAY_BY_DATE } from '../data/curriculum.js';
 import { TOPIC_BY_ID } from '../data/topics.js';
-import { KEY_DATES, START_DATE, TOTAL_DAYS } from '../data/phases.js';
+import { KEY_DATES, START_DATE, TOTAL_DAYS, phaseForDay } from '../data/phases.js';
 import { todayISO, daysBetween } from '../utils/dates.js';
 
 /** The day the app should open on: today's real date, clamped into the plan. */
@@ -188,3 +188,93 @@ export function needsBackupWarning(state) {
   const hasData = completedDayCount(state) > 0 || state.errors.length > 0;
   return hasData && (since === null || since >= 7);
 }
+
+
+/* ------------------------------------------------------- adaptive allocation */
+
+/**
+ * Floors, in minutes. A suggestion may never take a block below these.
+ *
+ * English's floor is the important one and it is NOT about marks-per-minute —
+ * English is the worst rate in the Mains paper. It is about the SECTIONAL
+ * cut-off: a Prelims English miss ends the year in October regardless of a 60 in
+ * Quant, and that is the most common single-cause failure for a self-studying
+ * candidate. GA's floor exists because it compounds and cannot be crammed.
+ */
+const BLOCK_FLOOR = { calc: 10, ga: 30, reas: 45, quant: 45, eng: 30, di: 10, rev: 25 };
+const SUBJECT_OF_BLOCK = { reas: 'reasoning', quant: 'quant', eng: 'english', ga: 'ga', di: 'quant' };
+const MAX_SHIFT = 10;
+
+/** Questions-weighted accuracy per subject, with the sample size behind it. */
+export function subjectAccuracy(state) {
+  const acc = {};
+  for (const [id, rec] of Object.entries(state.topics || {})) {
+    const topic = TOPIC_BY_ID[id];
+    if (!topic?.subject) continue;
+    const attempted = (rec.untimed || 0) + (rec.timed || 0);
+    if (!attempted) continue;
+    const a = (acc[topic.subject] ||= { attempted: 0, correct: 0 });
+    a.attempted += attempted;
+    a.correct += rec.correct || 0;
+  }
+  for (const a of Object.values(acc)) a.accuracy = a.attempted ? a.correct / a.attempted : null;
+  return acc;
+}
+
+/**
+ * "Move 10 minutes from X to Y this week."
+ *
+ * This is the one thing an app can do that a printed plan cannot: every minute
+ * allocation in this curriculum is a fixed guess about an average aspirant, and
+ * this is the only part that adapts to the actual person. It is advice, not an
+ * automatic reschedule — the blocks keep their nominal minutes and you decide.
+ * Silent rescheduling would break the 240-minute contract the whole plan rests on.
+ *
+ * Deliberately conservative: it needs 120+ questions on both sides, a 12-point
+ * gap, and it will not move more than 10 minutes or breach a floor.
+ */
+export function allocationAdvice(state) {
+  const acc = subjectAccuracy(state);
+  const ready = Object.entries(acc).filter(([, a]) => a.attempted >= 120 && a.accuracy !== null);
+  if (ready.length < 2) {
+    const short = 2 - ready.length;
+    return { pending: true, need: short,
+      message: `Log practice in ${short} more subject${short > 1 ? 's' : ''} (120+ questions each) ` +
+               `and this will start recommending where your minutes should move.` };
+  }
+
+  ready.sort((a, b) => b[1].accuracy - a[1].accuracy);
+  const [strongSub, strong] = ready[0];
+  const [weakSub, weak] = ready[ready.length - 1];
+  const gap = strong.accuracy - weak.accuracy;
+  if (gap < 0.12) {
+    return { balanced: true,
+      message: `Your subjects are within ${Math.round(gap * 100)} points of each other. ` +
+               `No reallocation needed — that is a good place to be.` };
+  }
+
+  // Take from a block of the strong subject that has room above its floor.
+  const phase = phaseForDay(currentDayNumber());
+  const blocks = phase?.blocks || [];
+  const donor = blocks.find(b => SUBJECT_OF_BLOCK[b.id] === strongSub &&
+                                 b.minutes - MAX_SHIFT >= (BLOCK_FLOOR[b.id] ?? 0));
+  const receiver = blocks.find(b => SUBJECT_OF_BLOCK[b.id] === weakSub);
+  if (!donor || !receiver) {
+    return { blocked: true,
+      message: `${label(weakSub)} is your weakest at ${pct(weak.accuracy)}, but ${label(strongSub)} ` +
+               `is already at its floor — it cannot be cut further without risking its sectional cut-off. ` +
+               `Use the weak-area slot on Sunday instead.` };
+  }
+
+  return {
+    from: donor.id, to: receiver.id, minutes: MAX_SHIFT,
+    strongSub, weakSub,
+    message: `${label(strongSub)} is at ${pct(strong.accuracy)} over ${strong.attempted} questions; ` +
+             `${label(weakSub)} is at ${pct(weak.accuracy)} over ${weak.attempted}. ` +
+             `Spend ${MAX_SHIFT} of your ${donor.label} minutes on ${receiver.label} this week.`
+  };
+}
+
+const pct = a => `${Math.round(a * 100)}%`;
+const label = s => ({ reasoning: 'Reasoning', quant: 'Quant', english: 'English', ga: 'GA',
+                      computer: 'Banking tech' }[s] || s);

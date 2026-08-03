@@ -9,7 +9,7 @@ import { scoreChart, bucketChart } from '../components/chart.js';
 import { CURRICULUM } from '../data/curriculum.js';
 import { PHASES } from '../data/phases.js';
 import { getState } from '../state/store.js';
-import { topicsByWeakness } from '../state/selectors.js';
+import { topicsByWeakness, allocationAdvice } from '../state/selectors.js';
 import {
   completedDayCount, studyDayCount, totalQuestions, streak, missedDays,
   countdowns, dayProgress, currentDayNumber, largestBucket, bucketCounts
@@ -91,6 +91,7 @@ export function progressView() {
         c.id === 'application' || c.id === 'prelims' ? '.stat--warn' : ''))
     ]),
 
+    allocationCard(state),
     weakSection,
 
     missedDays(state) > 0
@@ -130,6 +131,35 @@ export function progressView() {
         el('p.ios-section__note', { style: 'margin-top:var(--sp-3);padding:0',
           text: 'Fix only the largest bucket each week. Chasing all four at once fixes none of them.' })
       ])
+    ])
+  ]);
+}
+
+/**
+ * The one thing an app can do that a printed plan cannot.
+ *
+ * Every minute in this curriculum is a fixed guess about an average aspirant.
+ * This is the only part that adapts to the actual person in front of it — and by
+ * October it is worth more than any allocation I chose in August.
+ */
+function allocationCard(state) {
+  const a = allocationAdvice(state);
+  const tone = a.from ? '.banner--accent' : a.balanced ? '.banner--good' : '';
+  return el('section.card', {}, [
+    el('div.card__body', {}, [
+      el('span.eyebrow', { text: 'Where your minutes should go' }),
+      el(`div.banner${tone}`, { style: 'margin-top:var(--sp-3)' }, [
+        icon(a.from ? 'progress' : a.balanced ? 'check' : 'clock', 'banner__icon'),
+        el('div', {}, [
+          a.from ? el('strong', { text: `Move ${a.minutes} minutes this week. ` }) : null,
+          a.message
+        ])
+      ]),
+      a.pending
+        ? el('p.ios-note', { style: 'margin-top:var(--sp-3)',
+            text: 'Open any topic, tap "How to master this", and log what you attempted. ' +
+                  'Ten seconds a block is all this needs.' })
+        : null
     ])
   ]);
 }

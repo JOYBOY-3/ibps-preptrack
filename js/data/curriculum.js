@@ -413,6 +413,16 @@ export const DAY_BY_NUMBER = Object.fromEntries(CURRICULUM.map(d => [d.day, d]))
 export const DAY_BY_DATE = Object.fromEntries(CURRICULUM.map(d => [d.date, d]));
 
 // milestones attached after generation so dates stay the single source of truth
+/**
+ * One scheduled lighter day a fortnight.
+ *
+ * 145 days at 7/7 does not hold. The point is not the rest — it is that an
+ * UNPLANNED collapse desynchronises the revision queue, which costs far more than
+ * a planned half-day. Giving explicit permission on a known date is how you stop
+ * the unplanned one.
+ */
+const LIGHTER_EVERY = 14;
+
 const MILESTONES = {
   '2026-08-21': 'IBPS application deadline — submit today if you have not',
   '2026-09-18': 'Syllabus closed. Mock mode begins tomorrow.',
@@ -421,6 +431,9 @@ const MILESTONES = {
 };
 for (const d of CURRICULUM) {
   if (MILESTONES[d.date]) d.milestone = MILESTONES[d.date];
+  // Not a rest day — a day you may stop after four blocks without it counting as
+  // falling behind. Only ever a plain study day: never a mock, review or exam.
+  d.lighter = d.day % LIGHTER_EVERY === 0 && d.type === 'study';
 }
 // day 26 is the Sunday that closes the Prelims-core weeks
 CURRICULUM[25].milestone = 'Prelims core secure — Mains-only topics begin';
