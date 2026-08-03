@@ -8,18 +8,20 @@
  *
  * This data model merges cleanly because it is keyed maps plus append-only logs:
  *
- *   days[n].blocks[k]        OR         completion is monotonic
+ *   days[n].blocks[k]        newest wins, per block, by blocksAt timestamp
  *   days[n].questionsSolved  max        monotonic counter
- *   days[n].completedAt      earliest   first completion is the truth
+ *   days[n].completedAt      earliest, but cleared if any block merged to false
  *   days[n].notes            newer wins, else concatenate — never silently lost
  *   topics[id] counters      max each   monotonic
  *   topics[id].revisions     union by due date, done = OR
  *   mocks[] / errors[]       union by id, minus deletedIds tombstones
  *   settings                 last-write-wins by settings.updatedAt (trivial to redo)
  *
- * ACCEPTED TRADE-OFF: because blocks merge with OR, un-ticking a block on one device
- * does not propagate to another that still has it ticked. Losing an accidental tick
- * is a trivial cost; losing a real study day is not. The asymmetry is deliberate.
+ * BLOCKS USED TO MERGE WITH OR, and that was wrong. It protected the phone-vs-laptop
+ * case but made un-ticking impossible: you untick, the next sync ORs your false
+ * against the remote's true, and the tick silently returns. Per-block timestamps
+ * (blocksAt) keep the protection — two devices ticking DIFFERENT blocks still merge
+ * to both — while letting an explicit undo win, because it is the more recent fact.
  */
 
 const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
@@ -40,12 +42,35 @@ function latest(a, b) {
 }
 
 export function mergeDay(local = {}, remote = {}) {
+  /**
+   * Each block is resolved INDEPENDENTLY by whichever side touched it last.
+   *
+   * The old rule was OR, which protected the phone-vs-laptop case but made
+   * unticking impossible: you untick, the next sync ORs your false against the
+   * remote's true, and the tick silently returns. Per-block timestamps keep the
+   * protection (two devices ticking DIFFERENT blocks still merge to both) while
+   * letting an explicit undo win, because it is simply the more recent fact.
+   *
+   * A missing timestamp means pre-v3 data. It loses to any stamped change; if
+   * neither side is stamped we fall back to OR, since we cannot tell them apart
+   * and keeping work is the safer error.
+   */
   const blocks = {};
-  for (const k of new Set([
+  const blocksAt = {};
+  const keys = new Set([
     ...Object.keys(local.blocks || {}),
     ...Object.keys(remote.blocks || {})
-  ])) {
-    blocks[k] = Boolean(local.blocks?.[k]) || Boolean(remote.blocks?.[k]);
+  ]);
+
+  for (const k of keys) {
+    const lv = Boolean(local.blocks?.[k]);
+    const rv = Boolean(remote.blocks?.[k]);
+    const lt = local.blocksAt?.[k] || '';
+    const rt = remote.blocksAt?.[k] || '';
+
+    if (!lt && !rt) { blocks[k] = lv || rv; continue; }
+    if (lt >= rt) { blocks[k] = lv; if (lt) blocksAt[k] = lt; }
+    else { blocks[k] = rv; if (rt) blocksAt[k] = rt; }
   }
 
   let notes = local.notes || '';
@@ -56,12 +81,26 @@ export function mergeDay(local = {}, remote = {}) {
     else notes = `${local.notes}\n---\n${remote.notes}`;
   }
 
+  /**
+   * completedAt is cleared only when the merge produced an explicit FALSE — that
+   * is the one case where we know for certain the day is no longer complete.
+   *
+   * We must not infer the opposite. This function has no access to the
+   * curriculum, so it cannot know a day has six blocks; a day with three ticks
+   * has three `true` keys and looks "all true" here. Asserting completeness from
+   * that would mark a third-finished day as done. toggleBlock() recomputes
+   * completedAt against the real block count, so the merge only has to avoid
+   * lying in the direction it can actually verify.
+   */
+  const anyUnticked = Object.values(blocks).some(v => !v);
+
   return {
     ...remote,
     ...local,
     blocks,
+    blocksAt,
     questionsSolved: maxNum(local.questionsSolved, remote.questionsSolved),
-    completedAt: earliest(local.completedAt, remote.completedAt),
+    completedAt: anyUnticked ? null : earliest(local.completedAt, remote.completedAt),
     notes
   };
 }

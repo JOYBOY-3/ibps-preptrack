@@ -21,7 +21,7 @@ const REVISION_OFFSETS = [1, 4, 10, 25, 55, 110];
 
 function ensureDay(draft, day) {
   if (!draft.days[day]) {
-    draft.days[day] = { blocks: {}, questionsSolved: 0, notes: '', completedAt: null };
+    draft.days[day] = { blocks: {}, blocksAt: {}, questionsSolved: 0, notes: '', completedAt: null };
   }
   return draft.days[day];
 }
@@ -50,6 +50,9 @@ export function toggleBlock(dayNumber, blockId) {
     const day = ensureDay(draft, dayNumber);
     const nowDone = !day.blocks[blockId];
     day.blocks[blockId] = nowDone;
+    // Stamp the change so a later untick beats an earlier tick from any device.
+    day.blocksAt = day.blocksAt || {};
+    day.blocksAt[blockId] = new Date().toISOString();
 
     // A day counts complete only at 6/6 (or however many blocks the phase defines).
     // No partial credit — that is the point.

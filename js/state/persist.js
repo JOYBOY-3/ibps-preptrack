@@ -7,7 +7,7 @@
  */
 
 const KEY = 'preptrack.ibps2026';
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 /** crypto.randomUUID needs a secure context; fall back so file:// and http:// still work. */
 export function newId(prefix = '') {
@@ -23,7 +23,10 @@ export function freshState() {
     createdAt: new Date().toISOString(),
     lastBackupAt: null,
     settings: { theme: 'auto', updatedAt: new Date().toISOString() },
-    days: {},     // { "12": { blocks: {calc:true,…}, questionsSolved: 62, notes: "", completedAt } }
+    // days: { "12": { blocks:{calc:true}, blocksAt:{calc:"<iso>"}, questionsSolved, notes, completedAt } }
+    // blocksAt exists so an UNTICK can win a merge. Without a per-block timestamp
+    // the only safe merge is OR, and OR makes unticking impossible across devices.
+    days: {},
     topics: {},   // { "r-box": { untimed, timed, correct, firstStudied, revisions: [] } }
     mocks: [],
     errors: [],
@@ -39,6 +42,19 @@ export function freshState() {
 
 /** Migration chain. Each function takes state at version N and returns version N+1. */
 const MIGRATIONS = {
+  // v2 -> v3: stamp existing block ticks so they can be compared against future
+  // changes. Existing ticks are backdated to the day's completion (or creation)
+  // time, which is the truthful answer: they happened before anything new.
+  2: state => ({
+    ...state,
+    version: 3,
+    days: Object.fromEntries(Object.entries(state.days || {}).map(([day, d]) => {
+      const stamp = d.completedAt || state.createdAt || new Date(0).toISOString();
+      const blocksAt = { ...(d.blocksAt || {}) };
+      for (const k of Object.keys(d.blocks || {})) blocksAt[k] ??= stamp;
+      return [day, { ...d, blocksAt }];
+    }))
+  }),
   // v1 → v2: array entries gain stable ids so they can be merged rather than duplicated.
   1: state => ({
     ...state,

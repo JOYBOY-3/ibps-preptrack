@@ -60,8 +60,18 @@ export function isConnected() {
   return Boolean(getState().syncMeta?.provider === 'google' && hasSignedInBefore());
 }
 
+/**
+ * True while sync is writing its own bookkeeping or applying a merged remote.
+ *
+ * Without this guard the engine chases its own tail: writeSyncMeta() calls
+ * replaceState() -> notify() -> markDirty() -> schedules another sync 1.5s later
+ * -> which calls writeSyncMeta() again, forever. That perpetual loop is why the
+ * app appeared to sync (and, on the old build, re-render) without end.
+ */
+let applyingRemote = false;
+
 export function markDirty() {
-  if (!isConnected()) return;
+  if (!isConnected() || applyingRemote) return;
   dirty = true;
   clearTimeout(pushTimer);
   // We cannot open a popup from a timer, so this only fires when a token is
@@ -72,7 +82,8 @@ export function markDirty() {
 function writeSyncMeta(patch) {
   const next = { ...getState() };
   next.syncMeta = { ...next.syncMeta, ...patch };
-  replaceState(next);
+  applyingRemote = true;
+  try { replaceState(next); } finally { applyingRemote = false; }
 }
 
 /**
@@ -156,8 +167,9 @@ export async function sync({ interactive = false } = {}) {
           merged = mergeStates(local, remote);
           if (statesDiffer(local, merged)) {
             merged.syncMeta = local.syncMeta;
-            replaceState(merged);
-            saveNow(merged);
+            // Applying a merge is not a local edit — it must not schedule a push.
+            applyingRemote = true;
+            try { replaceState(merged); saveNow(merged); } finally { applyingRemote = false; }
           }
         }
       }
