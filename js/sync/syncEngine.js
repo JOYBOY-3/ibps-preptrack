@@ -88,7 +88,18 @@ export async function sync({ interactive = false } = {}) {
   }
 
   inFlightSince = Date.now();
-  inFlight = (async () => {
+
+  /**
+   * The body is a named function and the in-flight slot is cleared by a .finally()
+   * attached AFTER assignment, guarded by identity.
+   *
+   * Doing the clearing inside the body is subtly broken: an async function runs
+   * synchronously until its first await, so any early return (no token, for
+   * instance) executes its finally BEFORE `inFlight = ...` has been assigned —
+   * which then re-wedges the slot with an already-resolved promise, and every
+   * later call gets that corpse instead of a real sync.
+   */
+  const run = async () => {
     try {
       setStatus('syncing', 'Syncing…');
 
@@ -166,12 +177,14 @@ export async function sync({ interactive = false } = {}) {
           err?.userMessage || 'Sync failed. Your data is safe on this device.', msg);
       }
       return null;
-    } finally {
-      inFlight = null;
     }
-  })();
+  };
 
-  return inFlight;
+  const attempt = run();
+  inFlight = attempt;
+  attempt.finally(() => { if (inFlight === attempt) inFlight = null; });
+
+  return attempt;
 }
 
 /** syncMeta is device-local bookkeeping and has no business in the shared file. */

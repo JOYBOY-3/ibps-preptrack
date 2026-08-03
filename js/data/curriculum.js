@@ -113,9 +113,9 @@ const P3 = [
   ['r-puzzle-marathon','q-timework',   'e-rc-econ',         'ga-intl-org'],
   ['r-assumption',    'q-tsd',         'e-rc-social',       'ga-committees'],
   ['r-inference',     'q-mixture',     'e-rc-long',         'ga-circulars'],
-  ['r-io-1',          'q-di-caselet',  'e-connectors',      'ga-schemes-rev'],
+  ['r-io-1',          'q-di-caselet',  'e-rc-technique',    'ga-schemes-rev'],
   ['r-ds-3',          'q-di-arith',    'e-inference',       'ga-static-hq'],
-  ['r-triple-row',    'q-di-new',      'e-coherent',        'ga-static-cap'],
+  ['r-triple-row',    'q-di-new',      'e-cloze',           'ga-static-cap'],
   ['r-inscribed',     'q-quantity',    'e-rc-multi',        'ga-days'],
   ['r-blood-seating', 'q-ds',          'e-error-mains',     'ga-awards'],
   ['r-coa',           'q-di-missing',  'e-cloze-mains',     'ga-appointments'],
@@ -135,7 +135,31 @@ const P4_FOCUS = [
 const P4_GA = [
   'ga-awards', 'ga-appointments', 'ga-summits', 'ga-sports', 'ga-defence', 'ga-scitech',
   'ga-books', 'ga-ranks', 'ga-agreements', 'ga-state', 'ga-committees', 'ga-circulars',
-  'ga-schemes-rev', 'ga-banking-rev'
+  'ga-schemes-rev', 'ga-banking-rev', 'ga-banktypes'
+];
+
+/**
+ * P4 revisit rotation.
+ *
+ * The mock engine is not only mocks. Mains re-tests the Prelims fundamentals at
+ * higher difficulty — puzzles are 19 of 40 Reasoning questions and arithmetic is
+ * 11 of 40 Quant questions — so each mock day also drills one heavy Reasoning and
+ * one heavy Quant topic. Ordered by Mains weight, heaviest first, and long enough
+ * to cycle roughly twice across the 28 days.
+ */
+const P4_REASONING = [
+  // heaviest first, then one full pass over every Mains-weighted reasoning topic
+  'r-triple-row', 'r-inscribed', 'r-linear-double', 'r-circular', 'r-box', 'r-floor',
+  'r-category', 'r-uncertain', 'r-blood-seating', 'r-linear-single', 'r-polygon',
+  'r-floor-flat', 'r-dmy', 'r-assumption', 'r-inference', 'r-coa', 'r-io-1', 'r-io-2',
+  'r-ds-2', 'r-ds-3', 'r-coded-blood', 'r-coded-ineq', 'r-coded-dir', 'r-coding-chinese',
+  'r-syllogism-rev', 'r-series-alpha', 'r-blood', 'r-direction'
+];
+const P4_QUANT = [
+  'q-di-caselet', 'q-di-arith', 'q-di-missing', 'q-di-new', 'q-di-table', 'q-di-bar',
+  'q-di-line', 'q-di-pie', 'q-quantity', 'q-ds', 'q-pld-1', 'q-pld-2', 'q-si', 'q-ci',
+  'q-timework', 'q-pipes', 'q-tsd', 'q-boats', 'q-trains', 'q-mixture', 'q-partnership',
+  'q-percentage', 'q-ratio', 'q-average', 'q-ages', 'q-numsys', 'q-quadratic', 'q-series-wrong'
 ];
 
 // ------------------------------------------------------------------ P5 · days 127–146
@@ -268,7 +292,12 @@ function buildDay(day) {
     base.weekTheme = 'Mains Mock Engine';
     base.type = i % 7 === 6 ? 'review' : 'mock';
     base.headline = P4_FOCUS[i % P4_FOCUS.length];
-    base.blocks = blocksFor(day, phase, [null, null, null, P4_GA[i % P4_GA.length]]);
+    base.blocks = blocksFor(day, phase, [
+      P4_REASONING[i % P4_REASONING.length],
+      P4_QUANT[i % P4_QUANT.length],
+      null,
+      P4_GA[i % P4_GA.length]
+    ]);
   }
 
   // ---------------------------------------------------------------- P5

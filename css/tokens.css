@@ -1,53 +1,56 @@
 /* ============================================================================
-   Design tokens — every colour, size and space decision lives here.
-   No component file hardcodes a colour.
+   Design tokens.
 
-   Palette logic: a single deep-teal accent against neutrals that are biased
-   toward it, so nothing reads as an unconsidered grey. Light mode is a cool
-   paper, not pure white. Dark mode is a deep blue-black, not pure black —
-   pure black crushes shadow and makes elevation impossible to read.
+   Palette logic. Light mode is a cool paper, never pure white — pure white glares
+   under a study lamp at 6 a.m. Dark mode is a deep blue-black, never pure black —
+   pure black crushes shadow, so elevation becomes unreadable and everything looks
+   flat. Neutrals are biased toward the accent hue so no grey reads as accidental.
+
+   Text sits at three deliberate levels (ink / ink-2 / muted) rather than one
+   colour at three opacities: real colour steps stay legible on both grounds.
    ========================================================================== */
 
 :root {
   color-scheme: light dark;
 
   /* ---- neutrals, light ---- */
-  --bg:          #f7f9fa;
+  --bg:          #f2f5f7;
+  --bg-tint:     #e8eff2;
   --surface:     #ffffff;
-  --surface-2:   #eff4f6;
-  --surface-3:   #e5ecef;
-  --ink:         #0d1a21;
-  --ink-2:       #34474f;
-  --muted:       #647882;
-  --rule:        #e2eaee;
-  --rule-strong: #c8d5db;
+  --surface-2:   #eef3f6;
+  --surface-3:   #e3ebef;
+  --ink:         #0b1620;
+  --ink-2:       #33474f;
+  --muted:       #5e7279;
+  --rule:        #e0e9ed;
+  --rule-strong: #c6d4da;
 
   /* ---- accent ---- */
-  --accent:       #0f6e80;
-  --accent-hover: #0b5766;
-  --accent-soft:  #e2f0f3;
-  --accent-line:  #9fcdd6;
+  --accent:       #0d6e80;
+  --accent-hover: #0a5765;
+  --accent-soft:  #dff0f3;
+  --accent-line:  #93cbd6;
   --accent-ink:   #ffffff;
 
-  /* ---- semantic, deliberately separate from the accent ---- */
-  --good:        #257a49;
-  --good-soft:   #e2f1e8;
+  /* ---- semantic ---- */
+  --good:        #1f7a45;
+  --good-soft:   #ddf0e6;
   --warn:        #8a5210;
   --warn-soft:   #f9efdf;
   --danger:      #a83232;
   --danger-soft: #f9e7e7;
 
-  /* ---- subject keys: a real information channel, identical in every view ---- */
-  --reasoning:      #0f6e80;
-  --reasoning-soft: #e2f0f3;
+  /* ---- subject keys ---- */
+  --reasoning:      #0d6e80;
+  --reasoning-soft: #dff0f3;
   --quant:          #6a4a92;
-  --quant-soft:     #eee9f5;
-  --english:        #257a49;
-  --english-soft:   #e2f1e8;
+  --quant-soft:     #ede8f5;
+  --english:        #1f7a45;
+  --english-soft:   #ddf0e6;
   --ga:             #8a5210;
   --ga-soft:        #f9efdf;
-  --neutral-key:    #647882;
-  --neutral-soft:   #eaeff1;
+  --neutral-key:    #5e7279;
+  --neutral-soft:   #e8eef0;
 
   /* ---- type ---- */
   --font-ui:  'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -61,116 +64,135 @@
   --step-3:  clamp(1.55rem, 1.33rem + 1.05vw, 2.10rem);
   --step-4:  clamp(2.00rem, 1.62rem + 1.90vw, 3.00rem);
 
-  --tracking-tight: -0.021em;
-  --tracking-snug:  -0.011em;
+  --tracking-tight: -0.024em;
+  --tracking-snug:  -0.012em;
   --tracking-wide:   0.075em;
 
-  /* ---- space, 4px base ---- */
+  /* ---- space ---- */
   --sp-1: 0.25rem; --sp-2: 0.5rem;  --sp-3: 0.75rem; --sp-4: 1rem;
   --sp-5: 1.5rem;  --sp-6: 2rem;    --sp-7: 3rem;    --sp-8: 4rem;
 
-  --radius-sm: 8px;
-  --radius:    13px;
-  --radius-lg: 20px;
+  --radius-sm: 10px;
+  --radius:    16px;
+  --radius-lg: 22px;
 
-  /* Layered, low-opacity shadows read as depth rather than as a drop shadow. */
-  --shadow-1: 0 1px 1px rgb(13 26 33 / 4%), 0 2px 6px rgb(13 26 33 / 4%);
-  --shadow-2: 0 1px 2px rgb(13 26 33 / 5%), 0 6px 16px rgb(13 26 33 / 7%),
-              0 12px 32px rgb(13 26 33 / 4%);
-  --shadow-3: 0 2px 4px rgb(13 26 33 / 6%), 0 16px 40px rgb(13 26 33 / 12%);
-  --ring: 0 0 0 1px var(--rule);
+  /* Three stacked layers per shadow: a contact edge, a near diffusion and a far
+     ambient one. That is what separates depth from a grey blur. */
+  --shadow-1: 0 1px 1px rgb(11 22 32 / 4%),
+              0 2px 4px rgb(11 22 32 / 4%);
+  --shadow-2: 0 1px 2px rgb(11 22 32 / 5%),
+              0 4px 10px rgb(11 22 32 / 6%),
+              0 14px 32px rgb(11 22 32 / 5%);
+  --shadow-3: 0 2px 4px rgb(11 22 32 / 7%),
+              0 10px 24px rgb(11 22 32 / 10%),
+              0 28px 60px rgb(11 22 32 / 12%);
+  --glow-accent: 0 4px 14px color-mix(in srgb, var(--accent) 26%, transparent);
 
-  --nav-w:        248px;
-  --nav-w-mini:   72px;
+  --nav-w:        250px;
+  --nav-w-mini:   74px;
   --nav-h:        62px;
   --header-h:     58px;
   --content-max:  1160px;
 
-  --ease: cubic-bezier(0.22, 0.72, 0.28, 1);
+  --ease:   cubic-bezier(0.22, 0.72, 0.28, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --spring: linear(0, 0.006, 0.025 2.8%, 0.101 6.1%, 0.539 18.9%, 0.721 25.3%,
+                   0.849 31.5%, 0.937 38.1%, 0.968 41.8%, 0.991 45.7%, 1.006 50.1%,
+                   1.015 60.2%, 1.006 80.2%, 1);
+
   --focus-ring: 2px solid var(--accent);
   --focus-offset: 2px;
 }
 
-/* ---------------------------------------------------------------- dark
-   Tokens are redefined here; components are never styled inside a media query. */
+/* ---------------------------------------------------------------- dark */
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg:          #090e12;
-    --surface:     #10171d;
-    --surface-2:   #17212a;
-    --surface-3:   #1f2c36;
-    --ink:         #e9eff3;
-    --ink-2:       #b3c3cd;
-    --muted:       #7d919d;
-    --rule:        #1d2831;
-    --rule-strong: #2c3b46;
+    --bg:          #070b0f;
+    --bg-tint:     #0b1218;
+    --surface:     #0f161d;
+    --surface-2:   #16202a;
+    --surface-3:   #1e2b36;
+    --ink:         #eef4f8;
+    --ink-2:       #b6c6d1;
+    --muted:       #7d92a0;
+    --rule:        #1b2732;
+    --rule-strong: #2b3b48;
 
-    --accent:       #4ec3dc;
-    --accent-hover: #74d3e7;
-    --accent-soft:  #0d2a33;
-    --accent-line:  #1f4d5b;
-    --accent-ink:   #04161c;
+    --accent:       #48c8e0;
+    --accent-hover: #6fd8ec;
+    --accent-soft:  #0b2a34;
+    --accent-line:  #1e5364;
+    --accent-ink:   #04151b;
 
-    --good:        #58c489;
-    --good-soft:   #10281c;
-    --warn:        #dda75d;
-    --warn-soft:   #2e2410;
-    --danger:      #e58b8b;
-    --danger-soft: #301a1a;
+    --good:        #4fcb8b;
+    --good-soft:   #0d2a1d;
+    --warn:        #e0aa5f;
+    --warn-soft:   #2f2510;
+    --danger:      #ec8b8b;
+    --danger-soft: #331a1a;
 
-    --reasoning:      #4ec3dc;
-    --reasoning-soft: #0d2a33;
-    --quant:          #b79ae0;
-    --quant-soft:     #221c33;
-    --english:        #58c489;
-    --english-soft:   #10281c;
-    --ga:             #dda75d;
-    --ga-soft:        #2e2410;
-    --neutral-key:    #7d919d;
-    --neutral-soft:   #1a242c;
+    --reasoning:      #48c8e0;
+    --reasoning-soft: #0b2a34;
+    --quant:          #bb9fe6;
+    --quant-soft:     #221c34;
+    --english:        #4fcb8b;
+    --english-soft:   #0d2a1d;
+    --ga:             #e0aa5f;
+    --ga-soft:        #2f2510;
+    --neutral-key:    #7d92a0;
+    --neutral-soft:   #18222c;
 
-    --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
-    --shadow-2: 0 2px 6px rgb(0 0 0 / 40%), 0 12px 32px rgb(0 0 0 / 34%);
-    --shadow-3: 0 4px 10px rgb(0 0 0 / 45%), 0 20px 48px rgb(0 0 0 / 40%);
+    /* Dark surfaces read as lit by a rim highlight, not by a drop shadow. */
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 45%),
+                inset 0 1px 0 rgb(255 255 255 / 4%);
+    --shadow-2: 0 2px 6px rgb(0 0 0 / 45%), 0 12px 30px rgb(0 0 0 / 38%),
+                inset 0 1px 0 rgb(255 255 255 / 5%);
+    --shadow-3: 0 4px 12px rgb(0 0 0 / 50%), 0 24px 56px rgb(0 0 0 / 46%),
+                inset 0 1px 0 rgb(255 255 255 / 6%);
+    --glow-accent: 0 4px 18px color-mix(in srgb, var(--accent) 30%, transparent);
   }
 }
 
-/* The manual toggle must beat the media query in BOTH directions. */
 :root[data-theme='dark'] {
-  --bg: #090e12; --surface: #10171d; --surface-2: #17212a; --surface-3: #1f2c36;
-  --ink: #e9eff3; --ink-2: #b3c3cd; --muted: #7d919d;
-  --rule: #1d2831; --rule-strong: #2c3b46;
-  --accent: #4ec3dc; --accent-hover: #74d3e7; --accent-soft: #0d2a33;
-  --accent-line: #1f4d5b; --accent-ink: #04161c;
-  --good: #58c489; --good-soft: #10281c;
-  --warn: #dda75d; --warn-soft: #2e2410;
-  --danger: #e58b8b; --danger-soft: #301a1a;
-  --reasoning: #4ec3dc; --reasoning-soft: #0d2a33;
-  --quant: #b79ae0;    --quant-soft: #221c33;
-  --english: #58c489;  --english-soft: #10281c;
-  --ga: #dda75d;       --ga-soft: #2e2410;
-  --neutral-key: #7d919d; --neutral-soft: #1a242c;
-  --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
-  --shadow-2: 0 2px 6px rgb(0 0 0 / 40%), 0 12px 32px rgb(0 0 0 / 34%);
-  --shadow-3: 0 4px 10px rgb(0 0 0 / 45%), 0 20px 48px rgb(0 0 0 / 40%);
+  --bg: #070b0f; --bg-tint: #0b1218; --surface: #0f161d; --surface-2: #16202a; --surface-3: #1e2b36;
+  --ink: #eef4f8; --ink-2: #b6c6d1; --muted: #7d92a0;
+  --rule: #1b2732; --rule-strong: #2b3b48;
+  --accent: #48c8e0; --accent-hover: #6fd8ec; --accent-soft: #0b2a34;
+  --accent-line: #1e5364; --accent-ink: #04151b;
+  --good: #4fcb8b; --good-soft: #0d2a1d;
+  --warn: #e0aa5f; --warn-soft: #2f2510;
+  --danger: #ec8b8b; --danger-soft: #331a1a;
+  --reasoning: #48c8e0; --reasoning-soft: #0b2a34;
+  --quant: #bb9fe6;    --quant-soft: #221c34;
+  --english: #4fcb8b;  --english-soft: #0d2a1d;
+  --ga: #e0aa5f;       --ga-soft: #2f2510;
+  --neutral-key: #7d92a0; --neutral-soft: #18222c;
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 45%), inset 0 1px 0 rgb(255 255 255 / 4%);
+  --shadow-2: 0 2px 6px rgb(0 0 0 / 45%), 0 12px 30px rgb(0 0 0 / 38%),
+              inset 0 1px 0 rgb(255 255 255 / 5%);
+  --shadow-3: 0 4px 12px rgb(0 0 0 / 50%), 0 24px 56px rgb(0 0 0 / 46%),
+              inset 0 1px 0 rgb(255 255 255 / 6%);
+  --glow-accent: 0 4px 18px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 :root[data-theme='light'] {
-  --bg: #f7f9fa; --surface: #ffffff; --surface-2: #eff4f6; --surface-3: #e5ecef;
-  --ink: #0d1a21; --ink-2: #34474f; --muted: #647882;
-  --rule: #e2eaee; --rule-strong: #c8d5db;
-  --accent: #0f6e80; --accent-hover: #0b5766; --accent-soft: #e2f0f3;
-  --accent-line: #9fcdd6; --accent-ink: #ffffff;
-  --good: #257a49; --good-soft: #e2f1e8;
+  --bg: #f2f5f7; --bg-tint: #e8eff2; --surface: #ffffff; --surface-2: #eef3f6; --surface-3: #e3ebef;
+  --ink: #0b1620; --ink-2: #33474f; --muted: #5e7279;
+  --rule: #e0e9ed; --rule-strong: #c6d4da;
+  --accent: #0d6e80; --accent-hover: #0a5765; --accent-soft: #dff0f3;
+  --accent-line: #93cbd6; --accent-ink: #ffffff;
+  --good: #1f7a45; --good-soft: #ddf0e6;
   --warn: #8a5210; --warn-soft: #f9efdf;
   --danger: #a83232; --danger-soft: #f9e7e7;
-  --reasoning: #0f6e80; --reasoning-soft: #e2f0f3;
-  --quant: #6a4a92;    --quant-soft: #eee9f5;
-  --english: #257a49;  --english-soft: #e2f1e8;
+  --reasoning: #0d6e80; --reasoning-soft: #dff0f3;
+  --quant: #6a4a92;    --quant-soft: #ede8f5;
+  --english: #1f7a45;  --english-soft: #ddf0e6;
   --ga: #8a5210;       --ga-soft: #f9efdf;
-  --neutral-key: #647882; --neutral-soft: #eaeff1;
-  --shadow-1: 0 1px 1px rgb(13 26 33 / 4%), 0 2px 6px rgb(13 26 33 / 4%);
-  --shadow-2: 0 1px 2px rgb(13 26 33 / 5%), 0 6px 16px rgb(13 26 33 / 7%),
-              0 12px 32px rgb(13 26 33 / 4%);
-  --shadow-3: 0 2px 4px rgb(13 26 33 / 6%), 0 16px 40px rgb(13 26 33 / 12%);
+  --neutral-key: #5e7279; --neutral-soft: #e8eef0;
+  --shadow-1: 0 1px 1px rgb(11 22 32 / 4%), 0 2px 4px rgb(11 22 32 / 4%);
+  --shadow-2: 0 1px 2px rgb(11 22 32 / 5%), 0 4px 10px rgb(11 22 32 / 6%),
+              0 14px 32px rgb(11 22 32 / 5%);
+  --shadow-3: 0 2px 4px rgb(11 22 32 / 7%), 0 10px 24px rgb(11 22 32 / 10%),
+              0 28px 60px rgb(11 22 32 / 12%);
+  --glow-accent: 0 4px 14px color-mix(in srgb, var(--accent) 26%, transparent);
 }
