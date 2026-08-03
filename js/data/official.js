@@ -25,10 +25,14 @@ export const PRELIMS = {
   totalMarks: 100,
   totalMinutes: 60,
   sections: [
-    { id: 'eng',  name: 'English Language', questions: 30, marks: 30, minutes: 20 },
-    { id: 'num',  name: 'Numerical Ability', questions: 35, marks: 35, minutes: 20 },
-    { id: 'reas', name: 'Reasoning Ability', questions: 35, marks: 35, minutes: 20 }
+    { id: 'eng',  name: 'English Language',  questions: 30, marks: 30, minutes: 20, medium: 'English' },
+    { id: 'num',  name: 'Numerical Ability', questions: 35, marks: 35, minutes: 20, medium: '*' },
+    { id: 'reas', name: 'Reasoning Ability', questions: 35, marks: 35, minutes: 20, medium: '*' }
   ],
+  qualifyingNote:
+    'Candidates have to qualify in each of the three tests by securing cut-off marks to be ' +
+    'decided by IBPS. Adequate number of candidates in each category as decided by IBPS ' +
+    'depending upon requirements will be shortlisted for Online Main examination.',
   // "Candidates have to qualify in each of the three tests by securing cut-off
   //  marks to be decided by IBPS."
   sectionalCutoff: true
@@ -47,11 +51,21 @@ export const MAINS = {
   totalMarks: 200,
   totalMinutes: 125,
   sections: [
-    { id: 'ga',   name: 'General/Financial Awareness', questions: 40, marks: 50, minutes: 20 },
-    { id: 'eng',  name: 'General English',             questions: 40, marks: 40, minutes: 35 },
-    { id: 'reas', name: 'Reasoning Ability',           questions: 40, marks: 60, minutes: 35 },
-    { id: 'num',  name: 'Quantitative Aptitude',       questions: 40, marks: 50, minutes: 35 }
+    { id: 'ga',   name: 'General/Financial Awareness', questions: 40, marks: 50, minutes: 20, medium: '*' },
+    { id: 'eng',  name: 'General English',             questions: 40, marks: 40, minutes: 35, medium: 'English' },
+    { id: 'reas', name: 'Reasoning Ability',           questions: 40, marks: 60, minutes: 35, medium: '*' },
+    { id: 'num',  name: 'Quantitative Aptitude',       questions: 40, marks: 50, minutes: 35, medium: '*' }
   ],
+  /**
+   * The notification's own table header reads "Name of Tests (NOT BY SEQUENCE)".
+   * That is not decoration — the four sections can appear in ANY order on the day,
+   * so a plan that depends on meeting GA first is a plan that can be broken by the
+   * paper. What you control is which section you ATTEMPT first, not which is shown.
+   */
+  notBySequence: true,
+  qualifyingNote:
+    'Each candidate will be required to obtain a minimum score in each test of Online Main ' +
+    'Examination and also a minimum total score to be considered for further process.',
   // Clause F — "Each candidate will be required to obtain a minimum score in
   // EACH test of Online Main Examination and ALSO a minimum total score."
   sectionalCutoff: true,
@@ -62,6 +76,14 @@ export const MAINS = {
   // CONSIDERED FOR FINAL MERIT LISTING." There is no interview.
   decidesMerit: true
 };
+
+/**
+ * The asterisk in the notification's "Medium of Examination" column.
+ * English Language is always in English; the rest are bilingual by state.
+ */
+export const MEDIUM_NOTE =
+  '* Available in English, Hindi and your state\'s language. Where the English and translated ' +
+  'versions differ, the English version prevails.';
 
 /** Clause E — applies to BOTH papers. */
 export const NEGATIVE_MARK = 0.25;

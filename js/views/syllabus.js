@@ -22,7 +22,7 @@ import { getState } from '../state/store.js';
 import { setTopicUnderstood } from '../state/actions.js';
 import { topicAccuracy } from '../state/selectors.js';
 import { TOPICS, TOPIC_BY_ID, SUBJECT_META, TIER_LABEL } from '../data/topics.js';
-import { PRELIMS, MAINS, NEGATIVE_MARK } from '../data/official.js';
+import { PRELIMS, MAINS, NEGATIVE_MARK, MEDIUM_NOTE } from '../data/official.js';
 import * as W from '../data/weightage.js';
 import { guideFor } from '../data/paperGuide.js';
 import { getMasterySync, prefetchSubject, isLoaded } from '../data/mastery.js';
@@ -296,20 +296,19 @@ export function syllabusView() {
       seg
     ]),
 
-    // Quoted from the notification — visually distinct from everything below it.
+    // Quoted from the notification, laid out the way the notification lays it out.
+    // Chips showed only paper totals and hid the per-section split, which is the
+    // part that actually decides how you spend the 60 or 125 minutes.
     el('section.syl-official', {}, [
-      el('span.eyebrow', { text: 'From the official notification · clause D' }),
-      el('div.syl-official__grid', {}, [
-        fact(`${spec.totalQuestions} questions`),
-        fact(`${spec.totalMarks} marks`),
-        fact(`${spec.totalMinutes} minutes`),
-        fact('sectionally timed'),
-        fact(`−${NEGATIVE_MARK} per wrong answer`),
-        fact('sectional cut-offs')
-      ]),
-      paper === 'mains'
-        ? el('p.syl-official__note', { text: 'Only the Mains score reaches the merit list. There is no interview.' })
-        : el('p.syl-official__note', { text: 'A gate, not a rank. Clearing it by one mark and by twenty are worth the same.' })
+      el('span.eyebrow', {
+        text: `From the official notification · clause D · ${paper === 'mains' ? 'Main' : 'Preliminary'} Examination (Objective Test)`
+      }),
+      structureTable(spec),
+      el('p.syl-official__note', {
+        text: paper === 'mains'
+          ? 'Only the Mains score reaches the merit list. There is no interview.'
+          : 'A gate, not a rank. Clearing it by one mark and by twenty are worth the same.'
+      })
     ]),
 
     el('div.banner', {}, [icon('alert', 'banner__icon'), el('div', {}, [
@@ -328,6 +327,53 @@ export function syllabusView() {
   ]);
 }
 
-function fact(text) {
-  return el('span.syl-fact', { text });
+/**
+ * The exam structure, as the notification prints it.
+ *
+ * Every figure is read from official.js — nothing here is typed. Sr. No., Name of
+ * Tests, Medium, No. of Questions, Maximum Marks, Time allotted, and a Total row
+ * computed from the sections rather than stated, so the table can never disagree
+ * with itself.
+ */
+function structureTable(spec) {
+  const rows = spec.sections.map((s, i) => el('tr', {}, [
+    el('td.syl-st__no', { text: String(i + 1) }),
+    el('th.syl-st__name', { scope: 'row', text: s.name }),
+    el('td.syl-st__med', { text: s.medium }),
+    el('td', { text: String(s.questions) }),
+    el('td', { text: String(s.marks) }),
+    el('td.syl-st__time', { text: `${s.minutes} minutes` })
+  ]));
+
+  return el('div', {}, [
+    el('div.g-tablewrap', {}, [
+      el('table.g-table.syl-st', {}, [
+        el('thead', {}, [el('tr', {}, [
+          el('th', { text: 'Sr.' }),
+          el('th', {}, [
+            'Name of Tests',
+            // The notification's own header says this, and it matters: the four
+            // Mains sections can appear in ANY order on the day.
+            spec.notBySequence ? el('span.syl-st__seq', { text: ' (NOT BY SEQUENCE)' }) : null
+          ]),
+          el('th', { text: 'Medium' }),
+          el('th', { text: 'Questions' }),
+          el('th', { text: 'Marks' }),
+          el('th', { text: 'Time (separately timed)' })
+        ])]),
+        el('tbody', {}, rows),
+        el('tfoot', {}, [el('tr.syl-st__total', {}, [
+          el('td', {}),
+          el('th', { scope: 'row', text: 'Total' }),
+          el('td', {}),
+          el('td', { text: String(spec.sections.reduce((a, s) => a + s.questions, 0)) }),
+          el('td', { text: String(spec.sections.reduce((a, s) => a + s.marks, 0)) }),
+          el('td', { text: `${spec.totalMinutes} minutes` })
+        ])])
+      ])
+    ]),
+    el('p.syl-official__fine', { text: MEDIUM_NOTE }),
+    el('p.syl-official__fine', { text: `Penalty for wrong answers: ${NEGATIVE_MARK} of the marks assigned to that question is deducted. A blank answer carries no penalty.` }),
+    spec.qualifyingNote ? el('p.syl-official__fine', { text: spec.qualifyingNote }) : null
+  ]);
 }

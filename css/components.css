@@ -1677,14 +1677,6 @@ body {
   background: var(--accent-soft);
   border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
 }
-.syl-official__grid { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
-.syl-fact {
-  font-size: var(--step--2); font-weight: 650;
-  padding: 4px 9px; border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 70%, transparent);
-  color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
-  font-variant-numeric: tabular-nums;
-}
 .syl-official__note {
   margin: var(--sp-3) 0 0; font-size: var(--step--1); font-weight: 600;
   color: var(--accent); line-height: 1.5;
@@ -1782,4 +1774,50 @@ body {
 @media (max-width: 400px) {
   .syl-row { padding: var(--sp-2); gap: var(--sp-2); }
   .syl-head__bar { max-width: 60px; }
+}
+
+
+/* ---- the exam structure, laid out as the notification lays it out.
+   A table beats chips here: the per-section split is the part that decides how
+   you spend the 60 or 125 minutes, and chips could only show paper totals. */
+.syl-st { margin-top: var(--sp-3); }
+.syl-st thead th { white-space: nowrap; }
+.syl-st__no   { width: 1%; color: var(--muted); font-variant-numeric: tabular-nums; }
+.syl-st__name { white-space: normal !important; min-width: 9rem; }
+.syl-st__med  { color: var(--muted); }
+.syl-st__time { white-space: nowrap; }
+.syl-st__seq {
+  display: block; font-size: 0.6rem; font-weight: 800;
+  letter-spacing: var(--tracking-wide); color: var(--warn); margin-top: 1px;
+}
+.syl-st__total th, .syl-st__total td {
+  font-weight: 800; color: var(--ink);
+  border-top: 2px solid var(--rule-strong); border-bottom: 0;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.syl-official__fine {
+  margin: var(--sp-3) 0 0; font-size: var(--step--2);
+  color: var(--muted); line-height: 1.55;
+}
+.syl-official .g-tablewrap { background: var(--surface); }
+
+/* ---- scroll affordance.
+   A table that scrolls with no visual cue reads as a table that is simply cut
+   off. A fade on the right edge says "there is more", and it disappears once you
+   reach the end because the gradient is painted on the scrolling content itself. */
+.g-tablewrap {
+  background:
+    linear-gradient(to right, var(--surface) 30%, transparent) left / 24px 100% no-repeat local,
+    linear-gradient(to left,  var(--surface) 30%, transparent) right / 24px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgb(0 0 0 / 14%), transparent) left / 12px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgb(0 0 0 / 14%), transparent) right / 12px 100% no-repeat scroll,
+    var(--surface);
+}
+
+/* On a narrow phone, Medium is the column to lose first: it is one character
+   wide, and the footnote directly beneath already explains it. */
+@media (max-width: 430px) {
+  .syl-st__med, .syl-st thead th:nth-child(3), .syl-st__total td:nth-child(3) { display: none; }
+  .syl-st th, .syl-st td { padding-inline: var(--sp-2); }
+  .syl-st__name { min-width: 7.5rem; }
 }
