@@ -16,6 +16,7 @@ import { planView } from './views/plan.js';
 import { progressView } from './views/progress.js';
 import { settingsView } from './views/settings.js';
 import { weekView } from './views/week.js';
+import { mocksView } from './views/mocks.js';
 import { gateView } from './views/gate.js';
 import { hasSignedInBefore, initAuth } from './sync/googleAuth.js';
 import { initSyncListeners, markDirty, syncOnGesture, onSyncStatus } from './sync/syncEngine.js';
@@ -24,6 +25,7 @@ const ROUTES = [
   { id: 'today',    path: '#/today',    label: 'Today',    icon: 'today',    render: todayView },
   { id: 'week',     path: '#/week',     label: 'Week',     icon: 'week',     render: weekView },
   { id: 'plan',     path: '#/plan',     label: 'Plan',     icon: 'plan',     render: planView },
+  { id: 'mocks',    path: '#/mocks',    label: 'Mocks',    icon: 'trophy',   render: mocksView },
   { id: 'progress', path: '#/progress', label: 'Progress', icon: 'progress', render: progressView },
   { id: 'settings', path: '#/settings', label: 'Settings', icon: 'settings', render: settingsView }
 ];

@@ -5,6 +5,7 @@
 
 import { el } from '../utils/dom.js';
 import { icon } from '../components/icons.js';
+import { scoreChart, bucketChart } from '../components/chart.js';
 import { CURRICULUM } from '../data/curriculum.js';
 import { PHASES } from '../data/phases.js';
 import { getState } from '../state/store.js';
@@ -86,12 +87,19 @@ export function progressView() {
       ])
     ]),
 
-    el('div.placeholder', {}, [
-      icon('progress'),
-      el('div', {}, [
-        el('strong', { text: 'Mock log, error buckets and topic mastery arrive in M3–M4.' }),
-        el('div.muted', { style: 'margin-top:4px',
-          text: 'Score charts, accuracy trends and the needs-rework list build on this same state.' })
+    el('section.card', {}, [
+      el('div.card__body', {}, [
+        el('span.eyebrow', { text: 'Mock scores' }),
+        el('div', { style: 'margin-top:var(--sp-3)' }, [scoreChart(state.mocks)])
+      ])
+    ]),
+
+    el('section.card', {}, [
+      el('div.card__body', {}, [
+        el('span.eyebrow', { text: 'Where your marks leak' }),
+        el('div', { style: 'margin-top:var(--sp-3)' }, [bucketChart(counts)]),
+        el('p.ios-section__note', { style: 'margin-top:var(--sp-3);padding:0',
+          text: 'Fix only the largest bucket each week. Chasing all four at once fixes none of them.' })
       ])
     ])
   ]);

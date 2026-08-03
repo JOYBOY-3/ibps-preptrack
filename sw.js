@@ -3,7 +3,7 @@
  * installed it works completely offline — on a train, with no signal, at 6 a.m.
  */
 
-const CACHE = 'preptrack-v5';
+const CACHE = 'preptrack-v6';
 
 const SHELL = [
   './',
@@ -33,6 +33,8 @@ const SHELL = [
   './assets/fonts/manrope-var.woff2',
   './assets/fonts/plexmono-400.woff2',
   './assets/fonts/plexmono-600.woff2',
+  './js/views/mocks.js',
+  './js/components/chart.js',
   './js/views/today.js',
   './js/views/plan.js',
   './js/views/progress.js',

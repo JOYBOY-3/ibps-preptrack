@@ -1158,3 +1158,126 @@ body {
   .dot.is-done { animation: none; }
   .block-card:not(.is-done):hover { translate: none; }
 }
+
+/* ---------------------------------------------------------------- mock log */
+.mock-grid { display: flex; flex-direction: column; gap: var(--sp-2); }
+
+.mock-grid__head, .mock-grid__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) 1fr 1fr 0.9fr;
+  gap: var(--sp-2);
+  align-items: center;
+}
+.mock-grid__head {
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--rule);
+  font-size: var(--step--2);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.mock-grid__head span:not(:first-child) { text-align: center; }
+.mock-grid__label { font-weight: 650; font-size: var(--step--1); }
+.mock-grid__score {
+  text-align: center;
+  font-family: var(--font-num);
+  font-weight: 600;
+  color: var(--accent);
+}
+.input--num { min-height: 42px; padding-inline: var(--sp-2); text-align: center; font-family: var(--font-num); }
+
+.mock-totals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+.mock-totals .stat { padding: var(--sp-3) var(--sp-2); text-align: center; align-items: center; }
+
+.mock-addrow {
+  display: grid;
+  grid-template-columns: minmax(96px, 0.6fr) minmax(0, 2fr) auto;
+  gap: var(--sp-2);
+  align-items: center;
+}
+@media (max-width: 520px) {
+  .mock-addrow { grid-template-columns: 1fr 1fr; }
+  .mock-addrow .input { grid-column: 1 / -1; }
+}
+
+.mock-errs { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-3); }
+.mock-err {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface-2);
+  border-radius: 10px;
+  animation: card-in 0.24s var(--ease) both;
+}
+.mock-err__text { flex: 1; min-width: 0; font-size: var(--step--1); line-height: 1.4; }
+.mock-err .icon-btn { width: 30px; height: 30px; }
+.mock-err .icon-btn .icon { width: 15px; height: 15px; }
+
+.mock-gate {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px dashed var(--warn);
+  border-radius: 10px;
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: var(--step--1);
+  line-height: 1.45;
+}
+.mock-gate .icon { width: 17px; height: 17px; flex: none; margin-top: 1px; }
+
+/* ---------------------------------------------------------------- charts */
+.chart-wrap { display: flex; flex-direction: column; gap: var(--sp-2); }
+.chart { width: 100%; height: auto; overflow: visible; }
+.chart__grid { stroke: var(--rule); stroke-width: 1; }
+.chart__tick { fill: var(--muted); font-size: 8px; font-family: var(--font-num); }
+.chart__area { fill: color-mix(in srgb, var(--accent) 14%, transparent); }
+.chart__line {
+  fill: none; stroke: var(--accent); stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 1000; stroke-dashoffset: 1000;
+  animation: draw 0.9s var(--ease-out) forwards;
+}
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.chart__dot { fill: var(--accent); }
+.chart__dot--last {
+  fill: var(--surface); stroke: var(--accent); stroke-width: 2.5;
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 55%, transparent));
+}
+.chart-legend { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); flex-wrap: wrap; }
+.chart-empty {
+  padding: var(--sp-5) var(--sp-3);
+  text-align: center;
+  color: var(--muted);
+  font-size: var(--step--1);
+  border: 1px dashed var(--rule-strong);
+  border-radius: 12px;
+}
+
+.bars { display: flex; flex-direction: column; gap: var(--sp-3); }
+.bar { display: grid; grid-template-columns: 76px minmax(0, 1fr) 34px; gap: var(--sp-3); align-items: center; }
+.bar__label { font-size: var(--step--1); font-weight: 650; }
+.bar__track { height: 9px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 70%, transparent);
+  animation: grow 0.6s var(--ease-out) both;
+  transform-origin: left;
+}
+.bar__fill--worst { background: linear-gradient(90deg, var(--danger), color-mix(in srgb, var(--danger) 70%, #000)); }
+.bar__value { text-align: right; font-size: var(--step--1); color: var(--muted); }
+@keyframes grow { from { scale: 0 1; } to { scale: 1 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .chart__line { animation: none; stroke-dashoffset: 0; }
+  .bar__fill, .mock-err { animation: none; }
+}
