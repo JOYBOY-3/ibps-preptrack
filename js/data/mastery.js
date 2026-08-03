@@ -11,7 +11,8 @@ const SUBJECT_FILE = {
   reasoning: './data/mastery/reasoning.json',
   quant:     './data/mastery/quant.json',
   english:   './data/mastery/english.json',
-  ga:        './data/mastery/ga.json'
+  ga:        './data/mastery/ga.json',
+  computer:  './data/mastery/computer.json'
 };
 
 const cache = {};    // subject -> topics map
