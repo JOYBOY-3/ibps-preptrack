@@ -146,6 +146,29 @@ export function guideView() {
         'quietly costing you marks.')
     ]),
 
+    // ------------------------------------------------------------ syllabus
+    section('syllabus', 'Checking your coverage', 'The Syllabus screen, and what its tick means', [
+      lead('Today tells you what to do now. Syllabus tells you whether you are actually covering ' +
+           'the exam — open it weekly, not daily.'),
+      p('Header, next to the guide and Settings. Prelims and Mains tabs. Under each section you ' +
+        'get a guide to attacking that paper, the full year-by-year weightage grid, and every ' +
+        'topic grouped under its analysis row, heaviest first.'),
+      el('h3.g-h3', { text: 'The tick means what you say it means' }),
+      p('Tick a topic when you understand the concept and can solve its questions. That is your ' +
+        'judgement, not the app\'s — it records what you say and does not argue. Your logged ' +
+        'accuracy sits beside it as information, never as a veto. You are allowed to know ' +
+        'something the app has no evidence for.'),
+      p('The tick syncs to Drive like everything else, including un-ticking. If you untick on your ' +
+        'phone, a stale tick on your laptop will not bring it back.'),
+      el('h3.g-h3', { text: 'Two kinds of information, deliberately kept apart' }),
+      list([
+        'The panel at the top is quoted from the official notification — questions, marks, minutes, negative marking, sectional cut-offs. That is fact.',
+        'Everything below it is reverse-engineered from 8 years of memory-based paper analyses, because IBPS has NEVER published a topic-level syllabus and has never released a question paper. That is inference, and the screen says so.'
+      ]),
+      p('Anyone selling you "the official IBPS Clerk syllabus" is selling you the same inference ' +
+        'without the disclaimer.')
+    ]),
+
     // ------------------------------------------------------------ screens
     section('screens', 'Screen by screen', 'What each one is actually for', [
       el('div.g-screens', {}, [
@@ -162,6 +185,10 @@ export function guideView() {
         screenRow('progress', 'Progress', 'Weekly check. "Where your minutes should go" adapts to ' +
           'your logged accuracy. "Fix these first" ranks weak topics by marks at stake, not raw ' +
           'accuracy — a weak Puzzles beats a weak Mensuration every time.'),
+        screenRow('checklist', 'Syllabus', 'Not part of the daily flow — open it weekly to check ' +
+          'coverage. Every Prelims and Mains topic, ranked by how many questions it is worth, with ' +
+          'the full 8-year weightage grid, how each topic is asked, and a guide to attacking each ' +
+          'paper. Tick a topic when you understand it and can solve it.'),
         screenRow('settings', 'Settings', 'Set your state and your real exam dates. Read "Six ' +
           'things that are not about studying" — those cost people the job AFTER they pass.')
       ])
