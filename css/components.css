@@ -1658,3 +1658,128 @@ body {
   .g-sum { padding: var(--sp-3); }
   .g-table th, .g-table td { padding: var(--sp-2); }
 }
+
+/* ============================================================================
+   Syllabus — coverage screen.
+
+   Reuses .g-sec/.g-sum/.g-body (guide), .g-tablewrap/.g-table (guide),
+   .ios-adv (disclosure), .chip--<subject>, .tchip and .seg. What is genuinely new
+   is only the tick, the topic row, the trend marker and the official-facts panel.
+   ========================================================================== */
+
+.syl-view { max-width: 74ch; }
+
+/* ---- the notification panel. Deliberately unlike everything below it, because
+   this is quoted fact and the rest is inference from past papers. */
+.syl-official {
+  padding: var(--sp-4);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
+}
+.syl-official__grid { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
+.syl-fact {
+  font-size: var(--step--2); font-weight: 650;
+  padding: 4px 9px; border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+.syl-official__note {
+  margin: var(--sp-3) 0 0; font-size: var(--step--1); font-weight: 600;
+  color: var(--accent); line-height: 1.5;
+}
+
+/* ---- section header progress */
+.g-sum__sub { display: flex; align-items: center; gap: var(--sp-2); }
+.syl-head__count { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.syl-head__bar {
+  flex: 1; min-width: 44px; max-width: 120px; height: 5px;
+  border-radius: 999px; background: var(--surface-3, var(--surface-2));
+  overflow: hidden; position: relative;
+}
+.syl-head__bar::after {
+  content: ''; position: absolute; inset: 0 auto 0 0;
+  width: var(--pct, 0%); background: var(--accent);
+  transition: width 0.3s var(--ease);
+}
+.syl-sec.is-complete .syl-head__bar::after { background: var(--good); }
+
+/* ---- analysis group */
+.syl-group + .syl-group { margin-top: var(--sp-5); }
+.syl-group__head { display: flex; align-items: baseline; gap: var(--sp-2); flex-wrap: wrap; }
+.syl-group__name { font-weight: 700; font-size: var(--step--1); }
+.syl-group__avg {
+  font-size: var(--step--2); font-weight: 700; color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.syl-group__note {
+  margin: var(--sp-2) 0 0; font-size: var(--step--2);
+  color: var(--muted); line-height: 1.55;
+}
+.syl-rows { display: flex; flex-direction: column; gap: 5px; margin-top: var(--sp-3); }
+
+/* ---- trend */
+.syl-trend {
+  font-size: 0.66rem; font-weight: 700; padding: 2px 7px; border-radius: 999px;
+  background: var(--surface-2); color: var(--muted); white-space: nowrap;
+}
+.syl-trend--good   { background: var(--good-soft);   color: var(--good); }
+.syl-trend--warn   { background: var(--warn-soft);   color: var(--warn); }
+.syl-trend--danger { background: var(--danger-soft); color: var(--danger); }
+.syl-trend--accent { background: var(--accent-soft); color: var(--accent); }
+
+/* ---- topic row */
+.syl-row {
+  display: flex; gap: var(--sp-3); align-items: flex-start;
+  padding: var(--sp-3);
+  background: var(--surface-2); border-radius: 12px;
+  transition: background 0.16s var(--ease);
+}
+.syl-row.is-understood { background: color-mix(in srgb, var(--good) 10%, var(--surface-2)); }
+
+.syl-tick {
+  flex: none; width: 24px; height: 24px; margin-top: 1px;
+  display: grid; place-items: center;
+  border: 2px solid var(--rule-strong); border-radius: 7px;
+  background: var(--surface);
+  transition: background 0.16s var(--ease), border-color 0.16s var(--ease);
+}
+.syl-tick:hover { border-color: var(--accent); }
+.syl-tick .syl-tick__mark { width: 15px; height: 15px; opacity: 0; color: var(--accent-ink); }
+.syl-tick[aria-checked='true'] { background: var(--good); border-color: var(--good); }
+.syl-tick[aria-checked='true'] .syl-tick__mark { opacity: 1; }
+
+.syl-row__main { flex: 1; min-width: 0; }
+.syl-row__head { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.syl-row__name {
+  font-weight: 650; font-size: var(--step--1); text-align: left;
+  color: var(--ink); padding: 0; text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  text-underline-offset: 3px;
+  transition: color 0.16s var(--ease);
+}
+.syl-row__name:hover { color: var(--accent); }
+.syl-row__meta {
+  font-size: var(--step--2); color: var(--muted); margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.syl-pat { margin-top: var(--sp-2); }
+.syl-pat > summary {
+  font-size: var(--step--2); font-weight: 650; color: var(--accent);
+  cursor: pointer; list-style: none; padding: 2px 0;
+}
+.syl-pat > summary::-webkit-details-marker { display: none; }
+.syl-pat > summary::before { content: '▸ '; }
+.syl-pat[open] > summary::before { content: '▾ '; }
+.syl-pat .g-list { margin-top: var(--sp-2); }
+.syl-pat .g-list li { font-size: var(--step--2); }
+
+.syl-targets { display: flex; gap: 5px; flex-wrap: wrap; margin: var(--sp-3) 0; }
+.syl-avg { font-weight: 700; color: var(--ink); }
+
+@media (max-width: 400px) {
+  .syl-row { padding: var(--sp-2); gap: var(--sp-2); }
+  .syl-head__bar { max-width: 60px; }
+}

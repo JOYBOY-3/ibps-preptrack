@@ -7,7 +7,7 @@
  */
 
 const KEY = 'preptrack.ibps2026';
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 /** crypto.randomUUID needs a secure context; fall back so file:// and http:// still work. */
 export function newId(prefix = '') {
@@ -27,7 +27,9 @@ export function freshState() {
     // blocksAt exists so an UNTICK can win a merge. Without a per-block timestamp
     // the only safe merge is OR, and OR makes unticking impossible across devices.
     days: {},
-    topics: {},   // { "r-box": { untimed, timed, correct, firstStudied, revisions: [] } }
+    // { "r-box": { untimed, timed, correct, firstStudied, revisions: [],
+    //              understood, understoodAt } }
+    topics: {},
     mocks: [],
     errors: [],
     deletedIds: [],   // tombstones, so a deletion is not resurrected by another device
@@ -42,6 +44,21 @@ export function freshState() {
 
 /** Migration chain. Each function takes state at version N and returns version N+1. */
 const MIGRATIONS = {
+  /**
+   * v3 -> v4: every topic record gains the Syllabus tick.
+   *
+   * Not cosmetic. load() does a SHALLOW merge — { ...freshState(), ...parsed } —
+   * so `topics` is replaced wholesale and existing per-topic records would never
+   * pick up a new field's default. Without this, a record written before v4 reads
+   * `undefined` and merges differently from one written after it.
+   */
+  3: state => ({
+    ...state,
+    version: 4,
+    topics: Object.fromEntries(Object.entries(state.topics || {}).map(([id, t]) => [
+      id, { understood: false, understoodAt: null, ...t }
+    ]))
+  }),
   // v2 -> v3: stamp existing block ticks so they can be compared against future
   // changes. Existing ticks are backdated to the day's completion (or creation)
   // time, which is the truthful answer: they happened before anything new.

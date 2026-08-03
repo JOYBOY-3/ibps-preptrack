@@ -20,11 +20,12 @@ import { weekView } from './views/week.js';
 import { mocksView } from './views/mocks.js';
 import { gateView } from './views/gate.js';
 import { guideView } from './views/guide.js';
+import { syllabusView } from './views/syllabus.js';
 import { hasSignedInBefore, initAuth } from './sync/googleAuth.js';
 import { initSyncListeners, markDirty, syncOnGesture, onSyncStatus } from './sync/syncEngine.js';
 import { advanceStaleRevisions, scheduleExamSweep } from './state/actions.js';
 
-export const BUILD = 'v19';
+export const BUILD = 'v20';
 
 const ROUTES = [
   { id: 'today',    path: '#/today',    label: 'Today',    icon: 'today',    render: todayView },
@@ -43,7 +44,8 @@ const ROUTES = [
  * a bad trade. It is reachable from the header, from Settings and from the gate.
  */
 const EXTRA_ROUTES = [
-  { id: 'guide', path: '#/guide', label: 'How to use this', icon: 'book', render: guideView }
+  { id: 'syllabus', path: '#/syllabus', label: 'Syllabus', icon: 'checklist', render: syllabusView },
+  { id: 'guide',    path: '#/guide',    label: 'How to use this', icon: 'book', render: guideView }
 ];
 
 const ALL_ROUTES = [...ROUTES, ...EXTRA_ROUTES];
@@ -163,6 +165,8 @@ function bootApp() {
       ]),
       el('div.header-actions', {}, [
         el('span#sync-pip.sync-pip', { title: 'Sync status', 'aria-hidden': 'true' }),
+        el('a.icon-btn', { href: '#/syllabus', 'aria-label': 'Syllabus and coverage', title: 'Syllabus — what you have covered' },
+          [icon('checklist')]),
         el('a.icon-btn', { href: '#/guide', 'aria-label': 'How to use this app', title: 'How to use this app' },
           [icon('book')]),
         el('a.icon-btn', { href: '#/settings', 'aria-label': 'Settings' }, [icon('settings')])

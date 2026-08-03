@@ -3,7 +3,7 @@
  * installed it works completely offline — on a train, with no signal, at 6 a.m.
  */
 
-const CACHE = 'preptrack-v19';
+const CACHE = 'preptrack-v20';
 
 const SHELL = [
   './',
@@ -25,6 +25,9 @@ const SHELL = [
   './js/sync/syncEngine.js',
   './js/views/gate.js',
   './js/views/guide.js',
+  './js/views/syllabus.js',
+  './js/data/weightage.js',
+  './js/data/paperGuide.js',
   './js/data/phases.js',
   './js/data/curriculum.js',
   './js/data/topics.js',

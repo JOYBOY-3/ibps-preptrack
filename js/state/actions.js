@@ -44,7 +44,8 @@ function ensureTopic(draft, topicId) {
   if (!draft.topics[topicId]) {
     draft.topics[topicId] = {
       untimed: 0, timed: 0, correct: 0,
-      firstStudied: null, revisions: []
+      firstStudied: null, revisions: [],
+      understood: false, understoodAt: null
     };
   }
   return draft.topics[topicId];
@@ -205,6 +206,27 @@ export function markRevisionDone(topicId, offset, quality = 'solid') {
         topic.revisions.push({ due, offset: nextOffset, done: false });
       }
     }
+    return draft;
+  });
+}
+
+/**
+ * "I understand this and can solve it" — set by you, on the Syllabus screen.
+ *
+ * Pure self-declaration. The app records it and does not argue: logged accuracy
+ * is shown beside it as information, never as a veto. You are allowed to know
+ * something the app has no evidence for.
+ *
+ * The TIMESTAMP is what makes un-ticking work across devices. mergeTopic
+ * previously resolved unknown keys local-wins, so a `false` you set here would
+ * beat a remote `true` for ever. Same failure the block ticks had before
+ * blocksAt existed.
+ */
+export function setTopicUnderstood(topicId, understood) {
+  update(draft => {
+    const t = ensureTopic(draft, topicId);
+    t.understood = Boolean(understood);
+    t.understoodAt = new Date().toISOString();
     return draft;
   });
 }

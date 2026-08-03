@@ -13,6 +13,7 @@
  *   days[n].completedAt      earliest, but cleared if any block merged to false
  *   days[n].notes            newer wins, else concatenate — never silently lost
  *   topics[id] counters      max each   monotonic
+ *   topics[id].understood    newest wins by understoodAt, so an untick propagates
  *   topics[id].revisions     union by due date, done = OR
  *   mocks[] / errors[]       union by id, minus deletedIds tombstones
  *   settings                 last-write-wins by settings.updatedAt (trivial to redo)
@@ -113,6 +114,21 @@ export function mergeTopic(local = {}, remote = {}) {
     byDue.set(r.due, prev ? { ...prev, ...r, done: Boolean(prev.done) || Boolean(r.done) } : { ...r });
   }
 
+  /**
+   * The Syllabus tick resolves NEWEST-WINS, by its own timestamp.
+   *
+   * The spread below would otherwise resolve it local-wins — whichever device
+   * happens to be `local` at merge time keeps its value, so an untick on your
+   * phone would be undone by a stale `true` on your laptop, for ever. Exactly the
+   * bug blocksAt fixed in mergeDay. If neither side is stamped we fall back to
+   * OR, because we cannot tell them apart and keeping the tick is the safer error.
+   */
+  const lu = local.understoodAt || '';
+  const ru = remote.understoodAt || '';
+  const understood = (!lu && !ru)
+    ? Boolean(local.understood) || Boolean(remote.understood)
+    : (lu >= ru ? Boolean(local.understood) : Boolean(remote.understood));
+
   return {
     ...remote,
     ...local,
@@ -120,6 +136,8 @@ export function mergeTopic(local = {}, remote = {}) {
     timed: maxNum(local.timed, remote.timed),
     correct: maxNum(local.correct, remote.correct),
     firstStudied: earliest(local.firstStudied, remote.firstStudied),
+    understood,
+    understoodAt: latest(lu, ru) || null,
     revisions: [...byDue.values()].sort((a, b) => a.due.localeCompare(b.due))
   };
 }
