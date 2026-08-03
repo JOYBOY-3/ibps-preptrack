@@ -1,0 +1,16 @@
+<!doctype html><meta charset=utf-8>
+<link rel=stylesheet href="./css/tokens.css"><link rel=stylesheet href="./css/base.css">
+<link rel=stylesheet href="./css/components.css">
+<style>
+  body{padding:28px;display:flex;flex-direction:column;gap:22px;background:var(--bg)}
+  .lab{font:600 12px system-ui;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  /* force the states a screenshot cannot trigger */
+  #f button:nth-child(1){outline:2px solid color-mix(in srgb,var(--accent) 85%,transparent);outline-offset:3px;position:relative;z-index:1}
+  #h button:nth-child(1){background:var(--surface-2);color:var(--ink)}
+</style>
+<div class=lab>resting</div>
+<div class="seg" role=group><button aria-pressed=false>Auto</button><button aria-pressed=false>Light</button><button aria-pressed=true>Dark</button></div>
+<div class=lab>focused — the ring must be fully visible, not clipped</div>
+<div class="seg" id=f role=group><button aria-pressed=false>Auto</button><button aria-pressed=false>Light</button><button aria-pressed=true>Dark</button></div>
+<div class=lab>hovered</div>
+<div class="seg" id=h role=group><button aria-pressed=false>Auto</button><button aria-pressed=false>Light</button><button aria-pressed=true>Dark</button></div>

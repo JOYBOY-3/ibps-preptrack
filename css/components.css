@@ -377,18 +377,35 @@
 .setting-row__title { font-weight: 650; }
 .setting-row__desc { font-size: var(--step--1); color: var(--muted); margin-top: 2px; line-height: 1.45; }
 
-.seg { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: var(--radius-sm); overflow: hidden; }
+/* NO overflow:hidden here. It clipped the focus ring, because the global focus
+   style uses outline-offset — so keyboard users saw a partial rectangle or
+   nothing at all. The rounded ends come from the first and last children
+   instead, which leaves the outline free to sit outside the box. */
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  isolation: isolate;
+}
 .seg button {
   min-height: 40px;
   padding: var(--sp-2) var(--sp-3);
   font-size: var(--step--1);
   font-weight: 650;
   color: var(--muted);
-  background: var(--surface);
+  background: transparent;
   border-right: 1px solid var(--rule-strong);
+  transition: background 0.16s var(--ease), color 0.16s var(--ease);
 }
-.seg button:last-child { border-right: none; }
+.seg button:first-child { border-radius: calc(var(--radius-sm) - 1px) 0 0 calc(var(--radius-sm) - 1px); }
+.seg button:last-child  { border-radius: 0 calc(var(--radius-sm) - 1px) calc(var(--radius-sm) - 1px) 0; border-right: none; }
+.seg button:hover { background: var(--surface-2); color: var(--ink); }
+.seg button:active { background: color-mix(in srgb, var(--accent) 18%, transparent); }
 .seg button[aria-pressed='true'] { background: var(--accent); color: var(--accent-ink); }
+.seg button[aria-pressed='true']:hover { background: color-mix(in srgb, var(--accent) 88%, #000); }
+/* Raised above its neighbours so the ring is never overlapped by the next button. */
+.seg button:focus-visible { position: relative; z-index: 1; }
 
 /* ---------------------------------------------------------------- placeholder */
 .placeholder {
@@ -1461,7 +1478,10 @@ body {
 .weak-row {
   position: relative; display: flex; align-items: center; gap: var(--sp-3);
   padding: var(--sp-3); border-radius: 12px;
-  background: var(--surface-2); overflow: hidden;
+  background: var(--surface-2);
+  /* clip-path, not overflow:hidden — this keeps the accuracy fill inside the
+     rounded corners without swallowing the focus ring on a focusable row. */
+  clip-path: inset(0 round 12px);
   color: inherit; text-decoration: none;
   transition: background 0.16s var(--ease);
 }
@@ -1500,3 +1520,21 @@ body {
 .ios-adv > summary:hover { color: var(--accent); }
 .ios-adv > summary .icon { margin-left: auto; opacity: 0.6; }
 .ios-advbody { padding: 0 var(--sp-1) var(--sp-4); }
+
+
+/* ---------------------------------------------------------------- hover states
+   Found by auditing every interactive selector for :hover and :focus. These three
+   had neither, so they gave no feedback that they could be interacted with. */
+.copy-btn { transition: background 0.16s var(--ease), border-color 0.16s var(--ease); }
+.copy-btn:hover { background: var(--surface-2); border-color: var(--accent); color: var(--accent); }
+
+.input, .select { transition: border-color 0.16s var(--ease), background 0.16s var(--ease); }
+.input:hover, .select:hover { border-color: var(--rule-strong); }
+.input:hover:not(:focus), .select:hover:not(:focus) { background: var(--surface-2); }
+
+/* A focus ring must never be clipped by an ancestor. Anything focusable that sits
+   inside a rounded, clipped container gets lifted above it. */
+.weak-row:focus-visible,
+.wk-topic:focus-visible,
+.wk-card:focus-visible,
+.ios-row a:focus-visible { position: relative; z-index: 2; }
