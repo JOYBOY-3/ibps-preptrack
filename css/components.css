@@ -324,7 +324,7 @@
 
 .field label { font-size: var(--step--1); font-weight: 650; color: var(--ink-2); }
 
-.input, .textarea, .select {
+.input, .select {
   width: 100%;
   min-height: 44px;
   padding: var(--sp-2) var(--sp-3);
@@ -333,12 +333,11 @@
   border-radius: var(--radius-sm);
   color: var(--ink);
 }
-.input:focus, .textarea:focus, .select:focus {
+.input:focus, .select:focus {
   border-color: var(--accent);
   outline: var(--focus-ring);
   outline-offset: 1px;
 }
-.textarea { min-height: 88px; resize: vertical; line-height: 1.5; }
 
 .inline-field {
   display: flex;
@@ -363,19 +362,6 @@
 .big-note__body { color: var(--muted); max-width: 46ch; margin-inline: auto; line-height: 1.6; }
 
 /* ---------------------------------------------------------------- settings rows */
-.setting-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-4);
-  padding: var(--sp-4);
-  border-bottom: 1px solid var(--rule);
-  flex-wrap: wrap;
-}
-.setting-row:last-child { border-bottom: none; }
-.setting-row__text { flex: 1 1 220px; }
-.setting-row__title { font-weight: 650; }
-.setting-row__desc { font-size: var(--step--1); color: var(--muted); margin-top: 2px; line-height: 1.45; }
 
 /* NO overflow:hidden here. It clipped the focus ring, because the global focus
    style uses outline-offset — so keyboard users saw a partial rectangle or

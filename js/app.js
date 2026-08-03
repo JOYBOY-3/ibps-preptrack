@@ -25,7 +25,7 @@ import { hasSignedInBefore, initAuth } from './sync/googleAuth.js';
 import { initSyncListeners, markDirty, syncOnGesture, onSyncStatus } from './sync/syncEngine.js';
 import { advanceStaleRevisions, scheduleExamSweep } from './state/actions.js';
 
-export const BUILD = 'v23';
+export const BUILD = 'v24';
 
 const ROUTES = [
   { id: 'today',    path: '#/today',    label: 'Today',    icon: 'today',    render: todayView },
