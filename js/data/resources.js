@@ -73,7 +73,7 @@ export const RESOURCES = [
     id: 'yt-adda247', type: 'video', title: 'Adda247 / Bankers Adda',
     author: null, provider: 'YouTube', subject: 'all', priority: 'essential', cost: 'Free',
     bestFor: 'Full syllabus coverage, daily live classes, post-exam analysis.',
-    url: 'https://www.youtube.com/@Adda247live'
+    url: 'https://www.youtube.com/@Adda247'
   },
   {
     id: 'yt-studysmart', type: 'video', title: 'Study Smart — Chandrahas Tiwari',
@@ -85,7 +85,7 @@ export const RESOURCES = [
     id: 'yt-oliveboard', type: 'video', title: 'Oliveboard',
     author: null, provider: 'YouTube', subject: 'all', priority: 'recommended', cost: 'Free',
     bestFor: 'Strategy sessions, GA capsules, mock walkthroughs.',
-    url: 'https://www.youtube.com/@OliveboardBanking'
+    url: 'https://www.youtube.com/@Oliveboard'
   },
   {
     id: 'yt-feelfree', type: 'video', title: 'Feel Free to Learn',
@@ -94,7 +94,7 @@ export const RESOURCES = [
     url: 'https://www.youtube.com/@FeelFreetoLearn'
   },
   {
-    id: 'yt-bankerspoint', type: 'video', title: 'Bankers Point',
+    id: 'yt-bankerspoint', type: 'video', title: 'Bankers Point — YouTube search',
     author: null, provider: 'YouTube', subject: 'all', priority: 'optional', cost: 'Free',
     bestFor: 'Practice questions, quizzes, live solving.',
     url: 'https://www.youtube.com/results?search_query=bankers+point'
@@ -143,7 +143,7 @@ export const RESOURCES = [
     id: 'ca-capsule', type: 'website', title: 'Monthly current affairs capsule PDF',
     provider: 'Adda247 / Oliveboard', subject: 'ga', priority: 'essential', cost: 'Free',
     bestFor: 'One capsule a month. Your revision spine for Mains GA.',
-    url: 'https://www.adda247.com/current-affairs'
+    url: 'https://currentaffairs.adda247.com/'
   },
   {
     id: 'ca-quiz', type: 'website', title: 'Daily current affairs quiz',

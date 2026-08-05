@@ -1,7 +1,8 @@
 /**
- * The 147-day curriculum, generated from compact per-phase tables.
+ * The 145-day curriculum, generated from compact per-phase tables.
  *
- * Day 1 = Mon 3 Aug 2026. Day 147 = Sun 27 Dec 2026 (Mains).
+ * Day 1 = Wed 5 Aug 2026. Day 145 = Sun 27 Dec 2026 (Mains).
+ * Both come from phases.js — never hardcode either here.
  * Every day resolves to: date, phase, week, type, topic assignments and blocks.
  */
 

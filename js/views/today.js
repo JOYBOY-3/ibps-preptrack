@@ -9,6 +9,7 @@ import { el, announce } from '../utils/dom.js';
 import { icon } from './../components/icons.js';
 import { blockCard } from '../components/blockCard.js';
 import { DAY_BY_NUMBER } from '../data/curriculum.js';
+import { TOTAL_DAYS } from '../data/phases.js';
 import { TOPIC_BY_ID } from '../data/topics.js';
 import { getState } from '../state/store.js';
 import { toggleBlock, setQuestionsSolved, markRevisionDone, isFutureDay, REVISION_OFFSETS } from '../state/actions.js';
@@ -219,7 +220,7 @@ export function todayView() {
       ? el('button.btn.btn--sm', { type: 'button', onclick: () => { location.hash = '#/today'; } }, ['Jump to today'])
       : null,
     el('button.btn.btn--sm', {
-      type: 'button', disabled: dayNumber >= 147,
+      type: 'button', disabled: dayNumber >= TOTAL_DAYS,
       onclick: () => { location.hash = `#/today/${dayNumber + 1}`; }
     }, ['Next day →'])
   ]);

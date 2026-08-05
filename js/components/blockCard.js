@@ -4,7 +4,7 @@ import { el } from '../utils/dom.js';
 import { icon } from './icons.js';
 import { TOPIC_BY_ID, SUBJECT_META, TIER_LABEL } from '../data/topics.js';
 import { RESOURCE_BY_ID } from '../data/resources.js';
-import { openMasterySheet } from './masterySheet.js';
+import { openMasterySheet, BLOCK_SESSIONS } from './masterySheet.js';
 
 const RESOURCE_ICON = { book: 'book', video: 'video', website: 'globe', app: 'globe', tool: 'tool' };
 
@@ -29,6 +29,19 @@ export function blockCard(block, { done, isNext, onToggle, locked = false }) {
   // the Reasoning slot because that is exactly where it sits in the real paper —
   // but it should still read as Computer Awareness, in its own colour.
   const subject = topic?.subject || block.subject;
+
+  /**
+   * What, if anything, this block can explain about itself.
+   * A real topic gets the method sheet; an activity or a standing daily block
+   * gets a session protocol. Everything else gets no button rather than a
+   * promise the sheet cannot keep.
+   */
+  const SESSION_TOPIC = /-rev$|sectional|audit|errorbook|marathon|^e-mixed$/;
+  const guidance = topic
+    ? { subject, id: topic.id, name: topic.name, isSession: SESSION_TOPIC.test(topic.id) }
+    : (BLOCK_SESSIONS[block.id]
+        ? { subject: block.subject || 'quant', id: `block:${block.id}`, name: BLOCK_SESSIONS[block.id], isSession: true }
+        : null);
   const meta = subject ? SUBJECT_META[subject] : null;
   const keyVar = subject ? `var(--${subject})` : 'var(--neutral-key)';
 
@@ -63,11 +76,23 @@ export function blockCard(block, { done, isNext, onToggle, locked = false }) {
     weightChips.length ? el('div.block-meta', {}, weightChips) : null,
     resources.length ? el('div.block-resources', {}, resources) : null,
     el('div.block-actions', {}, [
-      topic
+      /**
+       * The label must match what the sheet actually contains.
+       *
+       * It used to read "How to master this" on everything with a topicId —
+       * including the eleven scheduled ACTIVITIES (sectionals, revision passes,
+       * the syllabus audit), which open a session protocol rather than a method.
+       * You do not "master" a sectional. Meanwhile the three standing daily
+       * blocks — the calculation drill, the DI set and the revision queue — had
+       * no button at all, despite running every single day for 145 days.
+       */
+      guidance
         ? el('button.btn.btn--ghost', {
             type: 'button',
-            onclick: () => openMasterySheet(topic.subject, topic.id, topic.name)
-          }, [icon('book'), 'How to master this'])
+            title: guidance.isSession ? 'How to run this session' : 'Method, tricks, traps and a time target',
+            onclick: () => openMasterySheet(guidance.subject, guidance.id, guidance.name)
+          }, [icon(guidance.isSession ? 'tool' : 'book'),
+              guidance.isSession ? 'How to run this' : 'How to master this'])
         : null,
       el(`button.btn${done ? '.btn--done' : '.btn--primary'}`, {
         type: 'button',

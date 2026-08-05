@@ -13,7 +13,7 @@ import { currentDayNumber } from './selectors.js';
  * from day 22 against a 30-minute block — so the queue became an unread backlog by
  * mid-September and the retention mechanism died. And the last rung landed 21 days
  * after first study: a topic learned on day 5 was never scheduled again before
- * Mains on day 147.
+ * Mains on the last day of the plan.
  *
  * This ladder is expanding, and its final rung lands ~110 days out so August
  * material still gets a touch in December.

@@ -11,7 +11,7 @@ import { icon } from './components/icons.js';
 import { getState, subscribe } from './state/store.js';
 import { requestPersistence } from './state/persist.js';
 import { currentDayNumber } from './state/selectors.js';
-import { KEY_DATES } from './data/phases.js';
+import { KEY_DATES, TOTAL_DAYS } from './data/phases.js';
 import { todayView, setViewedDay } from './views/today.js';
 import { planView } from './views/plan.js';
 import { progressView } from './views/progress.js';
@@ -25,7 +25,7 @@ import { hasSignedInBefore, initAuth } from './sync/googleAuth.js';
 import { initSyncListeners, markDirty, syncOnGesture, onSyncStatus, resumeSession } from './sync/syncEngine.js';
 import { advanceStaleRevisions, scheduleExamSweep } from './state/actions.js';
 
-export const BUILD = 'v26';
+export const BUILD = 'v27';
 
 const ROUTES = [
   { id: 'today',    path: '#/today',    label: 'Today',    icon: 'today',    render: todayView },
@@ -93,7 +93,7 @@ function render() {
   const { route, param } = parseHash();
   currentRouteId = route.id;
 
-  if (route.id === 'today') setViewedDay(param && param >= 1 && param <= 147 ? param : null);
+  if (route.id === 'today') setViewedDay(param && param >= 1 && param <= TOTAL_DAYS ? param : null);
   const renderArgs = route.id === 'week' ? [param] : [];
 
   const main = $('#main');
@@ -247,7 +247,7 @@ function bootApp() {
     navigator.serviceWorker.register('./sw.js').catch(() => { /* offline support is optional */ });
   }
 
-  console.info(`[PrepTrack] build ${BUILD} · Day ${currentDayNumber()} of 147`);
+  console.info(`[PrepTrack] build ${BUILD} · Day ${currentDayNumber()} of ${TOTAL_DAYS}`);
 }
 
 boot();
