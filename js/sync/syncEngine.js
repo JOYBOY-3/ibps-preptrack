@@ -240,18 +240,17 @@ export function disconnectSync() {
  * token and pushes the change. In practice this makes sync feel fully automatic.
  */
 /**
- * Piggy-back a sync on the user's next tap — but NEVER open a popup from here.
+ * Piggy-back a sync on the user's next tap. NEVER opens a popup.
  *
- * This used to call sync({ interactive: true }) when the token had lapsed, which
- * meant: change the theme, and the very same click's pointerup opened a Google
- * sign-in dialog. The user asked for a colour and got an auth prompt. Any tap
- * after any edit could do it, on every screen.
+ * Two separate bugs have lived here. First it called sync({ interactive: true })
+ * on a lapsed token, so changing the theme opened a Google dialog from the very
+ * same click. Then it called silentToken(), which was believed to be silent but
+ * was still GIS's popup — so the dialog simply moved to the user's first tap after
+ * every reopen, which is worse, because now it appeared to come from nowhere.
  *
- * An auth popup the user did not ask for is hostile, and it is the kind of thing
- * that makes people distrust an app with their Drive. So the gesture path is now
- * strictly non-interactive: if the token is fresh we push quietly, and if it has
- * lapsed we say so in the status pip and wait for the user to press Sync now.
- * Their work is already safe on the device either way.
+ * silentToken() is genuinely silent now (hidden iframe, prompt=none), so this path
+ * can renew freely without ever showing anything. An auth popup nobody asked for is
+ * hostile, and it is exactly what makes someone distrust an app with their Drive.
  */
 export function syncOnGesture() {
   if (!isConnected() || !navigator.onLine) return;
@@ -267,7 +266,7 @@ export function syncOnGesture() {
   silentToken().then(t => {
     if (t) return sync({ interactive: false });
     if (status.state !== 'pending') {
-      setStatus('pending', 'Saved on this device. Open Settings and tap Sync now to reach Drive.');
+      setStatus('pending', 'Saved on this device · reconnecting to Drive');
     }
   });
 }
@@ -275,10 +274,13 @@ export function syncOnGesture() {
 /**
  * Called once at startup, after the GIS script is ready.
  *
- * Restores the session without any user action: renew the token silently, then
- * pull whatever another device wrote and push whatever this one has. This is the
- * step that was missing, and its absence is what made a returning user feel they
- * had been signed out.
+ * Restores the session without any user action: adopt the stored token if it still
+ * has life in it, otherwise renew it silently through the iframe, then pull
+ * whatever another device wrote and push whatever this one has.
+ *
+ * Reopening within the hour needs no network round-trip for auth at all, because
+ * the token is persisted. That is the case that used to feel most broken — close
+ * the tab, reopen it a minute later, and be asked to sign in.
  */
 export async function resumeSession() {
   if (!isConnected()) return;
@@ -288,7 +290,14 @@ export async function resumeSession() {
   }
   const token = await silentToken();
   if (!token) {
-    setStatus('pending', 'Signed in, but Drive needs a moment. Open Settings and tap Sync now.');
+    /**
+     * Renewal did not land. Say nothing that sounds like a demand: the user IS
+     * signed in, their work IS saved, and the next silent attempt (tab focus, the
+     * 60s timer, their next tap) will very likely succeed. Telling them to go and
+     * sign in again — which this used to do, on every single launch — was the
+     * whole complaint.
+     */
+    setStatus('pending', 'Saved on this device · reconnecting to Drive');
     return;
   }
   await sync({ interactive: false });

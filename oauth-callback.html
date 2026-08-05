@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>PrepTrack — connecting</title>
+</head>
+<body>
+<p>Connecting to Google Drive…</p>
+<script>
+/*
+ * OAuth silent-renewal landing page.
+ *
+ * PrepTrack loads this inside a hidden iframe pointed at Google's authorisation
+ * endpoint with `prompt=none`. When the user still has a live Google session and
+ * has already granted these scopes, Google 302s straight back here with the token
+ * in the URL FRAGMENT — no interface is ever drawn, so nothing flashes on screen.
+ * When it cannot be done silently, Google redirects here with an `error` instead.
+ *
+ * Either way this page's only job is to hand the result to the app and disappear.
+ *
+ * Fragments never leave the browser: they are not sent to GitHub Pages, they are
+ * not in any server log. The token lives only in this document until postMessage
+ * passes it to the opener, and the target origin is pinned to our own so it can
+ * never be delivered to another site.
+ */
+(function () {
+  var raw = location.hash.replace(/^#/, '') || location.search.replace(/^\?/, '');
+  var p = new URLSearchParams(raw);
+
+  var msg = {
+    source: 'preptrack-oauth',
+    state: p.get('state') || null,
+    access_token: p.get('access_token') || null,
+    expires_in: p.get('expires_in') || null,
+    error: p.get('error') || (p.get('access_token') ? null : 'no_token')
+  };
+
+  // Scrub the token out of the address bar before anything else can read it.
+  try { history.replaceState(null, '', location.pathname); } catch (e) { /* not critical */ }
+
+  var target = (window.parent && window.parent !== window) ? window.parent : window.opener;
+  if (target) {
+    try { target.postMessage(msg, location.origin); }
+    catch (e) { /* the app has gone away; nothing to do */ }
+  }
+})();
+</script>
+</body>
+</html>

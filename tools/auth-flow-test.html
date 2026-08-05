@@ -1,0 +1,102 @@
+<!doctype html><meta charset=utf-8><title>auth flow</title>
+<!--
+  Silent-renewal test. Runs in a REAL browser because the whole point is platform
+  behaviour that no Node shim can model: iframe creation, postMessage origin
+  checks, and whether anything opens a popup.
+
+  Run with:  ./tools/auth-test.sh
+-->
+<body><pre id=out>pending</pre><script type="module">
+const out=[]; let pass=0, fail=0;
+const ok=(c,m)=>{ c?(pass++,out.push('  PASS  '+m)):(fail++,out.push('  FAIL  '+m)); };
+
+let popupCalls = 0;
+window.google = { accounts: { oauth2: {
+  initTokenClient: () => ({ requestAccessToken(){ popupCalls++; } }),
+  revoke: () => {}
+} } };
+localStorage.setItem('preptrack.identity', JSON.stringify({email:'you@example.com',name:'A'}));
+
+const auth = await import('../js/sync/googleAuth.js?t=' + Date.now());
+
+out.push('== the callback page speaks the right protocol ==');
+await new Promise(res => {
+  const f = document.createElement('iframe');
+  f.style.cssText='position:absolute;left:-9999px;width:1px;height:1px';
+  const nonce='abc123';
+  window.addEventListener('message', function h(e){
+    if (e.origin!==location.origin || e.data?.source!=='preptrack-oauth') return;
+    window.removeEventListener('message',h);
+    ok(e.data.state===nonce, 'callback echoes state back (' + e.data.state + ')');
+    ok(e.data.access_token==='TOK123', 'callback forwards the access_token');
+    ok(e.data.expires_in==='3599', 'callback forwards expires_in');
+    ok(e.source===f.contentWindow, 'message really came from the frame we made');
+    f.remove(); res();
+  });
+  f.src='../oauth-callback.html#access_token=TOK123&expires_in=3599&state='+nonce+'&token_type=Bearer';
+  document.body.appendChild(f);
+  setTimeout(()=>{ ok(false,'callback replied in time'); res(); }, 4000);
+});
+
+out.push('== the callback reports errors rather than hanging ==');
+await new Promise(res => {
+  const f = document.createElement('iframe');
+  f.style.cssText='position:absolute;left:-9999px;width:1px;height:1px';
+  window.addEventListener('message', function h(e){
+    if (e.origin!==location.origin || e.data?.source!=='preptrack-oauth') return;
+    window.removeEventListener('message',h);
+    ok(e.data.error==='login_required', 'error param forwarded (' + e.data.error + ')');
+    ok(!e.data.access_token, 'no token on the error path');
+    f.remove(); res();
+  });
+  f.src='../oauth-callback.html#error=login_required&state=xyz';
+  document.body.appendChild(f);
+  setTimeout(()=>{ ok(false,'callback replied to the error case'); res(); }, 4000);
+});
+
+out.push('== silentToken builds a correct, hidden, prompt=none request ==');
+const before = document.querySelectorAll('iframe').length;
+const p = auth.silentToken({ timeoutMs: 1200 });
+await new Promise(r=>setTimeout(r,60));
+const frames=[...document.querySelectorAll('iframe')];
+const frame=frames[frames.length-1];
+ok(frames.length===before+1, 'exactly one iframe was created');
+const u=new URL(frame.src);
+ok(u.origin+u.pathname==='https://accounts.google.com/o/oauth2/v2/auth','points at Google auth endpoint');
+ok(u.searchParams.get('prompt')==='none','prompt=none  <- this is what makes it silent');
+ok(u.searchParams.get('response_type')==='token','response_type=token');
+ok(u.searchParams.get('login_hint')==='you@example.com','login_hint pins the account');
+ok(u.searchParams.get('redirect_uri')===auth.REDIRECT_URI,'redirect_uri matches REDIRECT_URI');
+ok(u.searchParams.get('redirect_uri').endsWith('/oauth-callback.html'),'redirect_uri ends at the callback page');
+ok(u.searchParams.get('state')&&u.searchParams.get('state').length>8,'a state nonce is present');
+ok(u.searchParams.get('scope').includes('drive.appdata'),'scope still appdata-only');
+ok(!u.searchParams.get('scope').includes('auth/drive '),'scope never widens to full Drive');
+const cs=getComputedStyle(frame);
+ok(cs.visibility==='hidden'||frame.offsetParent===null,'the iframe is invisible');
+ok(frame.getAttribute('aria-hidden')==='true','hidden from assistive tech too');
+ok(popupCalls===0,'>>> silentToken opened ZERO popups <<<');
+
+out.push('== a forged message cannot inject a token ==');
+window.postMessage({source:'preptrack-oauth',state:'WRONG',access_token:'EVIL'},location.origin);
+await new Promise(r=>setTimeout(r,80));
+ok(auth.getToken()!=='EVIL','a wrong state nonce is rejected');
+const r1 = await p;
+ok(r1===null,'times out to null when Google never answers');
+ok(document.querySelectorAll('iframe').length===before,'the iframe is cleaned up');
+ok(popupCalls===0,'still zero popups after the whole cycle');
+
+out.push('== the token survives a reload ==');
+localStorage.setItem('preptrack.token', JSON.stringify({accessToken:'FRESH', expiresAt: Date.now()+3600e3}));
+const auth2 = await import('../js/sync/googleAuth.js?t=' + (Date.now()+1));
+ok(auth2.hasFreshToken()===true,'a stored, unexpired token is adopted on load');
+ok(auth2.getToken()==='FRESH','and it is the right one  <- reopening within the hour is instant');
+localStorage.setItem('preptrack.token', JSON.stringify({accessToken:'STALE', expiresAt: Date.now()-1000}));
+const auth3 = await import('../js/sync/googleAuth.js?t=' + (Date.now()+2));
+ok(auth3.hasFreshToken()===false,'an expired stored token is ignored');
+auth3.forgetToken();
+ok(localStorage.getItem('preptrack.token')===null,'forgetToken clears the stored copy');
+
+out.push('');
+out.push(fail? ('FAILED '+fail+' of '+(pass+fail)) : ('ALL '+pass+' CHECKS PASSED'));
+document.getElementById('out').textContent = out.join('\n');
+</script></body>

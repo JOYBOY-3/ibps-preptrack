@@ -9,24 +9,91 @@
  *
  * Consequences we design around:
  *  - Access tokens live 1 hour. There are NO refresh tokens in this flow.
- *  - GIS deliberately removed silent auto-refresh, and it has no hidden-iframe path.
- *  - requestAccessToken() opens a real popup, so it REQUIRES transient user
- *    activation. Called from a timer or on page load it will be blocked.
- *    Every call site here must sit inside a click/tap handler.
- *  - In practice the popup auto-closes in well under a second when the user is
- *    already signed in and has granted consent — a brief flash, no interaction.
+ *  - GIS's requestAccessToken() ALWAYS opens a popup, whatever `prompt` is set to,
+ *    so it REQUIRES transient user activation. From a timer or at page load it is
+ *    blocked; from a tap it opens a real Google dialog. Either way it is unusable
+ *    for automatic renewal, and pretending otherwise is what made this app appear
+ *    to demand a fresh sign-in on every launch.
+ *
+ * So the module has two clearly separated paths, and the separation is the point:
+ *
+ *   silentToken()   automatic. A hidden iframe against Google's auth endpoint with
+ *                   prompt=none. Draws nothing, needs no gesture, cannot surprise
+ *                   anyone. Used at startup, on a timer, on tab focus.
+ *   acquireToken()  interactive. The GIS popup. Reachable ONLY from a button the
+ *                   user pressed on purpose.
+ *
+ * Nothing automatic may ever call acquireToken(). That rule is enforced by a test.
  */
 
 import { GOOGLE_CLIENT_ID, GOOGLE_SCOPES, ALLOWED_USERS } from '../config.js';
 
 const GIS_SRC = 'https://accounts.google.com/gsi/client';
 const USERINFO = 'https://www.googleapis.com/oauth2/v3/userinfo';
+const AUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/v2/auth';
 const IDENTITY_KEY = 'preptrack.identity';
+const TOKEN_KEY = 'preptrack.token';
 
 let tokenClient = null;
 let accessToken = null;
 let expiresAt = 0;
 let loading = null;
+
+/**
+ * Where Google sends the silent-renewal iframe back to.
+ *
+ * Derived from the current path so it is correct on GitHub Pages
+ * (/ibps-preptrack/), at a domain root, and from file:// alike. Whatever this
+ * resolves to must be listed under "Authorised redirect URIs" on the OAuth
+ * client, or Google refuses the request with redirect_uri_mismatch.
+ */
+export function redirectUri() {
+  // Tolerates being imported outside a browser, and partial location shims.
+  const origin = (typeof location !== 'undefined' && location?.origin) || '';
+  const path = (typeof location !== 'undefined' && location?.pathname) || '/';
+  if (!origin) return '';
+  return origin + path.replace(/[^/]*$/, '') + 'oauth-callback.html';
+}
+
+/**
+ * Convenience alias. Stable for the life of the page: hash routing never changes
+ * location.pathname, so this cannot drift out from under an in-flight renewal.
+ */
+export const REDIRECT_URI = redirectUri();
+
+/**
+ * The access token is persisted, deliberately.
+ *
+ * Google issues a one-hour access token and NO refresh token to browser apps, and
+ * the token used to live only in the module variable above — so it died on every
+ * reload. Closing the tab and reopening it thirty seconds later left the app
+ * unauthenticated, which is what made it feel as though it had signed you out.
+ *
+ * The trade-off is deliberate and small: the token grants drive.appdata (a hidden
+ * folder only this app can see) plus the user's own name and email. It cannot
+ * touch a single real file in their Drive. The app renders no untrusted HTML
+ * anywhere — utils/dom.js has no innerHTML path — so there is no script-injection
+ * route to read it back out, and the study data sitting beside it in localStorage
+ * is the more valuable thing regardless.
+ */
+function persistToken() {
+  try {
+    if (accessToken) localStorage.setItem(TOKEN_KEY, JSON.stringify({ accessToken, expiresAt }));
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch { /* private mode, storage full — sync simply falls back to renewing */ }
+}
+
+(function restoreToken() {
+  try {
+    const t = JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null');
+    // Only adopt it with real life left, so we never present a token that is
+    // about to expire mid-upload.
+    if (t?.accessToken && Date.now() < Number(t.expiresAt) - 60_000) {
+      accessToken = t.accessToken;
+      expiresAt = Number(t.expiresAt);
+    }
+  } catch { /* ignore a corrupt entry */ }
+})();
 
 /** Cached identity survives reloads and offline launches. */
 export function getIdentity() {
@@ -91,55 +158,114 @@ export function getToken() {
   return hasFreshToken() ? accessToken : null;
 }
 
+const TOKEN_TIMEOUT_MS = 60_000;
+
 /**
- * Acquire an access token.
+ * Renew the token with NO interface at all, via a hidden iframe.
+ *
+ * WHY NOT tokenClient.requestAccessToken({ prompt: '' }) — this used to do exactly
+ * that, on the belief that an empty prompt means "no UI". It does not. GIS's
+ * requestAccessToken ALWAYS opens a popup window; prompt only controls whether the
+ * account chooser and consent screen are drawn inside it. Two things followed, and
+ * together they are the whole "it asks me to sign in every time" complaint:
+ *
+ *   - At startup there is no transient user activation (measured: isActive false,
+ *     window.open blocked), so the popup was blocked outright and the app settled
+ *     into a status telling the user to go and sync manually.
+ *   - On their first tap there IS activation, so the very same call succeeded in
+ *     opening a real Google popup — an auth prompt nobody asked for, on every
+ *     reopen, triggered by tapping anything at all.
+ *
+ * This is the standard OIDC silent-renew instead. We point a hidden iframe at
+ * Google's authorisation endpoint with prompt=none. If the user's Google session
+ * is alive and the grant already exists, Google 302s straight to our callback page
+ * with a token in the fragment and never draws a pixel. If it cannot, it redirects
+ * with an error. Nothing is ever displayed, and no user gesture is required.
+ *
+ * Resolves to a token, or null. It never rejects and never shows anything, so it
+ * is safe to call at startup, on a timer, or from any gesture.
+ */
+let renewing = null;
+
+export function silentToken({ timeoutMs = 12_000 } = {}) {
+  if (hasFreshToken()) return Promise.resolve(accessToken);
+  if (!hasSignedInBefore()) return Promise.resolve(null);
+  // Startup, the visibility handler and the auto-sync timer can all ask at once.
+  // One iframe, one answer, shared by every caller.
+  if (renewing) return renewing;
+
+  renewing = new Promise(resolve => {
+    const nonce = `pt${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+    const frame = document.createElement('iframe');
+    frame.setAttribute('aria-hidden', 'true');
+    frame.setAttribute('tabindex', '-1');
+    frame.setAttribute('title', 'Google silent sign-in');
+    frame.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;border:0;visibility:hidden';
+
+    let settled = false;
+    const done = value => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      window.removeEventListener('message', onMessage);
+      frame.remove();
+      renewing = null;
+      resolve(value);
+    };
+
+    const timer = setTimeout(() => {
+      // The commonest cause by far is the redirect URI not being registered, and
+      // that is invisible from here because the error page is cross-origin.
+      console.warn(
+        '[preptrack] silent token renewal timed out. If this is persistent, add\n  ' +
+        REDIRECT_URI + '\nto "Authorised redirect URIs" on the OAuth client in Google Cloud Console.'
+      );
+      done(null);
+    }, timeoutMs);
+
+    function onMessage(e) {
+      if (e.origin !== location.origin) return;
+      if (e.source !== frame.contentWindow) return;
+      const d = e.data;
+      if (!d || d.source !== 'preptrack-oauth' || d.state !== nonce) return;
+      if (!d.access_token) return done(null);
+      accessToken = d.access_token;
+      expiresAt = Date.now() + Number(d.expires_in || 3600) * 1000;
+      persistToken();
+      done(accessToken);
+    }
+    window.addEventListener('message', onMessage);
+
+    const params = new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      redirect_uri: REDIRECT_URI,
+      response_type: 'token',
+      scope: GOOGLE_SCOPES,
+      prompt: 'none',
+      state: nonce,
+      include_granted_scopes: 'true'
+    });
+    // Naming the account stops Google having to choose between several signed-in
+    // sessions — which it refuses to do under prompt=none.
+    const email = getIdentity()?.email;
+    if (email) params.set('login_hint', email);
+
+    frame.src = `${AUTH_ENDPOINT}?${params.toString()}`;
+    document.body.appendChild(frame);
+  });
+
+  return renewing;
+}
+
+/**
+ * Acquire an access token INTERACTIVELY. This is the only function in the app that
+ * can open a Google popup, and it must only ever be reached from a button the user
+ * deliberately pressed — "Continue with Google" or "Sync now".
  *
  * MUST be called synchronously inside a user gesture, or the popup is blocked and
  * this rejects with 'popup_failed_to_open'. Returns the cached token when it is
  * still fresh, so most calls cost nothing.
  */
-const TOKEN_TIMEOUT_MS = 60_000;
-
-/**
- * Renew the token WITHOUT any user interaction.
- *
- * The access token lives in a module variable, so it dies on every reload —
- * Google's browser token model issues a one-hour access token and no refresh
- * token, by design. Nothing used to ask for a new one at startup, so reopening
- * the app left it silently unsynced until you went to Settings and pressed a
- * button that opened a Google dialog. That reads as "it is asking me to sign in
- * again", and it is why the app did not feel like Docs.
- *
- * requestAccessToken({ prompt: '' }) returns a token with NO UI when the user
- * still has a live Google session and has already granted these scopes — which
- * is the normal case. When they do not, GIS calls error_callback instead of
- * showing anything, so this can never surprise anyone with a popup.
- *
- * Resolves to a token, or null. It never rejects, because a failed silent renewal
- * is not an error — it just means we sync on the next explicit gesture.
- */
-export function silentToken({ timeoutMs = 8000 } = {}) {
-  if (hasFreshToken()) return Promise.resolve(accessToken);
-  if (!tokenClient || !hasSignedInBefore()) return Promise.resolve(null);
-
-  return new Promise(resolve => {
-    let settled = false;
-    const done = v => { if (!settled) { settled = true; clearTimeout(timer); resolve(v); } };
-    const timer = setTimeout(() => done(null), timeoutMs);
-
-    tokenClient.callback = resp => {
-      if (resp.error) return done(null);
-      accessToken = resp.access_token;
-      expiresAt = Date.now() + Number(resp.expires_in || 3600) * 1000;
-      done(accessToken);
-    };
-    tokenClient.error_callback = () => done(null);
-
-    try { tokenClient.requestAccessToken({ prompt: '' }); }
-    catch { done(null); }
-  });
-}
-
 export function acquireToken() {
   if (hasFreshToken()) return Promise.resolve(accessToken);
   if (!tokenClient) return Promise.reject(new Error('auth_unavailable'));
@@ -162,6 +288,7 @@ export function acquireToken() {
       if (resp.error) return bad(new Error(resp.error));
       accessToken = resp.access_token;
       expiresAt = Date.now() + Number(resp.expires_in || 3600) * 1000;
+      persistToken();
       ok(accessToken);
     };
     tokenClient.error_callback = err => bad(new Error(err?.type || 'popup_closed'));
@@ -216,6 +343,7 @@ export async function signIn() {
 export function forgetToken() {
   accessToken = null;
   expiresAt = 0;
+  persistToken();   // writes through to localStorage, clearing the stored copy
 }
 
 /** Revoke the grant with Google and clear the cached identity. */
