@@ -6,7 +6,7 @@
  * from a library. The Today screen stays clean; the depth lives one tap away.
  */
 
-import { el, $ } from '../utils/dom.js';
+import { el, $, fill } from '../utils/dom.js';
 import { icon } from './icons.js';
 import { getMastery } from '../data/mastery.js';
 import { logTopicPractice } from '../state/actions.js';
@@ -93,7 +93,7 @@ export async function openMasterySheet(subject, topicId, topicName) {
     // revision", "Reasoning sectional", "Error notebook, complete pass". They have
     // no solving method to teach, so they used to open a blank sheet. They get a
     // session protocol instead, which is what they actually need.
-    body.replaceChildren(sessionGuide(topicId, topicName));
+    fill(body, sessionGuide(topicId, topicName));
     return;
   }
 
@@ -106,7 +106,7 @@ export async function openMasterySheet(subject, topicId, topicName) {
     m.timeTarget ? el('span.chip.chip--accent', { text: 'Target: ' + shortTime(m.timeTarget) }) : null
   ]);
 
-  body.replaceChildren(
+  fill(body, [
     m.confidence === 'medium' || m.confidence === 'low'
       ? el('div.banner.banner--warn', {}, [icon('alert', 'banner__icon'), el('div', {}, [
           el('strong', { text: 'Cross-check this one. ' }),
@@ -149,7 +149,7 @@ export async function openMasterySheet(subject, topicId, topicName) {
           ])
         : null
     ]))
-  );
+  ]);
 }
 
 /** How to RUN a session, for the scheduled activities that have no method. */

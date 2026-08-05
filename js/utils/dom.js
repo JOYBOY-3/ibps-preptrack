@@ -55,3 +55,20 @@ export function announce(message) {
   live.textContent = '';
   setTimeout(() => { live.textContent = message; }, 50);
 }
+
+
+/**
+ * Null-safe replaceChildren.
+ *
+ * Node.replaceChildren() accepts Node | string, so a null argument is coerced to
+ * the STRING "null" and rendered as visible text. el() already filters nulls in
+ * its children array, but a direct replaceChildren call bypasses that — which is
+ * how the literal word "null" appeared at the top of the mastery sheet for 111 of
+ * 142 topics, every one whose confidence was 'high'.
+ *
+ * Use this anywhere children are built conditionally.
+ */
+export function fill(node, children) {
+  node.replaceChildren(...[].concat(children).filter(c => c !== null && c !== undefined && c !== false));
+  return node;
+}

@@ -22,10 +22,10 @@ import { gateView } from './views/gate.js';
 import { guideView } from './views/guide.js';
 import { syllabusView } from './views/syllabus.js';
 import { hasSignedInBefore, initAuth } from './sync/googleAuth.js';
-import { initSyncListeners, markDirty, syncOnGesture, onSyncStatus } from './sync/syncEngine.js';
+import { initSyncListeners, markDirty, syncOnGesture, onSyncStatus, resumeSession } from './sync/syncEngine.js';
 import { advanceStaleRevisions, scheduleExamSweep } from './state/actions.js';
 
-export const BUILD = 'v25';
+export const BUILD = 'v26';
 
 const ROUTES = [
   { id: 'today',    path: '#/today',    label: 'Today',    icon: 'today',    render: todayView },
@@ -210,7 +210,18 @@ function bootApp() {
   // activation, so a gesture is the only moment we can legally mint a fresh token.
   document.addEventListener('pointerup', syncOnGesture, { passive: true });
   initSyncListeners();
-  initAuth();
+
+  /**
+   * Restore the Drive session the moment GIS is ready, with no user action.
+   *
+   * The access token is a module variable, so every reload starts with none —
+   * Google issues a one-hour token and no refresh token to browser apps. Without
+   * this the app opened unsynced and stayed that way until you pressed a button
+   * that summoned a Google dialog, which is indistinguishable from being signed
+   * out. Renewal here is silent: it succeeds invisibly when the Google session is
+   * alive, and fails quietly into the status pip when it is not.
+   */
+  initAuth().then(ready => { if (ready) resumeSession(); });
 
   // Anything more than a week overdue is advanced past, once per launch. Without
   // this, three missed days in November leave 40 items permanently "due" and the

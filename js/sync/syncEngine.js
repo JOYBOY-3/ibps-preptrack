@@ -16,7 +16,7 @@ import { getState, replaceState } from '../state/store.js';
 import { saveNow } from '../state/persist.js';
 import { mergeStates, statesDiffer } from './merge.js';
 import { findStateFile, downloadState, uploadState } from './driveClient.js';
-import { getToken, acquireToken, hasFreshToken, hasSignedInBefore } from './googleAuth.js';
+import { getToken, acquireToken, silentToken, hasFreshToken, hasSignedInBefore } from './googleAuth.js';
 import { SYNC_DEBOUNCE_MS } from '../config.js';
 
 const listeners = new Set();
@@ -262,10 +262,36 @@ export function syncOnGesture() {
     return;
   }
 
-  // Lapsed. Tell them once, quietly, and stop — do not summon a popup.
-  if (status.state !== 'pending') {
-    setStatus('pending', 'Saved on this device. Open Settings and tap Sync now to reach Drive.');
+  // Lapsed. Try to renew SILENTLY — no popup, no interruption. Only if that
+  // fails do we fall back to telling them, once.
+  silentToken().then(t => {
+    if (t) return sync({ interactive: false });
+    if (status.state !== 'pending') {
+      setStatus('pending', 'Saved on this device. Open Settings and tap Sync now to reach Drive.');
+    }
+  });
+}
+
+/**
+ * Called once at startup, after the GIS script is ready.
+ *
+ * Restores the session without any user action: renew the token silently, then
+ * pull whatever another device wrote and push whatever this one has. This is the
+ * step that was missing, and its absence is what made a returning user feel they
+ * had been signed out.
+ */
+export async function resumeSession() {
+  if (!isConnected()) return;
+  if (!navigator.onLine) {
+    setStatus('offline', 'Offline — saved on this device, will sync when you reconnect');
+    return;
   }
+  const token = await silentToken();
+  if (!token) {
+    setStatus('pending', 'Signed in, but Drive needs a moment. Open Settings and tap Sync now.');
+    return;
+  }
+  await sync({ interactive: false });
 }
 
 let lastInteractiveAttempt = 0;
@@ -284,7 +310,10 @@ function startAutoSync() {
     if (!isConnected() || !navigator.onLine) return;
     if (document.visibilityState !== 'visible') return;
     if (!dirty) return;
-    if (!hasFreshToken()) return;       // wait for a gesture to renew
+    // Renew silently rather than waiting for a gesture. A token lasts an hour; a
+    // study session lasts four. Without this, everything after the first hour sat
+    // unsynced until the user happened to tap something.
+    if (!hasFreshToken()) { silentToken().then(t => { if (t) sync({ interactive: false }); }); return; }
     sync({ interactive: false });
   }, AUTO_SYNC_INTERVAL_MS);
 }
@@ -294,8 +323,8 @@ export function initSyncListeners() {
 
   window.addEventListener('online', () => {
     if (!isConnected()) return;
-    if (dirty && hasFreshToken()) sync({ interactive: false });
-    else setStatus('pending', 'Back online — syncing shortly.');
+    setStatus('pending', 'Back online — syncing.');
+    resumeSession();
   });
 
   window.addEventListener('offline', () => {
@@ -305,8 +334,11 @@ export function initSyncListeners() {
   document.addEventListener('visibilitychange', () => {
     if (!isConnected()) return;
     if (document.visibilityState === 'visible') {
-      // Returning to the tab: pull anything another device pushed.
+      // Returning to the tab: renew if needed, then pull whatever another device
+      // pushed while this one was hidden. Renewing here is what makes coming back
+      // to a tab left open overnight just work.
       if (hasFreshToken()) sync({ interactive: false });
+      else silentToken().then(t => { if (t) sync({ interactive: false }); });
     } else if (dirty && hasFreshToken()) {
       // Last chance to flush before the tab is backgrounded or closed.
       sync({ interactive: false });

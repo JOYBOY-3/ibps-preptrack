@@ -7,7 +7,7 @@
  * a mock counted when you learned nothing from it.
  */
 
-import { el, $, announce } from '../utils/dom.js';
+import { el, $, announce, fill } from '../utils/dom.js';
 import { icon } from '../components/icons.js';
 import { getState } from '../state/store.js';
 import { logMock, logError } from '../state/actions.js';
@@ -105,7 +105,10 @@ export function mocksView() {
 
   const errorList = el('div.mock-errs');
   const renderErrors = () => {
-    errorList.replaceChildren(
+    // fill(), not replaceChildren — the trailing ternary is null once you have
+    // logged an error, and native replaceChildren would render it as the literal
+    // text "null" under your error list.
+    fill(errorList, [
       ...pendingErrors.map((e, i) => errorRow(e, () => {
         pendingErrors.splice(i, 1); renderErrors(); updateGate();
       })),
@@ -113,7 +116,7 @@ export function mocksView() {
         ? el('p.mock-gate', {}, [icon('alert'),
             el('span', { text: 'Log at least one error before saving. A mock you did not analyse taught you nothing.' })])
         : null
-    );
+    ]);
   };
 
   const saveBtn = el('button.btn.btn--primary.btn--full', {

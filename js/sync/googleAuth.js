@@ -100,6 +100,46 @@ export function getToken() {
  */
 const TOKEN_TIMEOUT_MS = 60_000;
 
+/**
+ * Renew the token WITHOUT any user interaction.
+ *
+ * The access token lives in a module variable, so it dies on every reload —
+ * Google's browser token model issues a one-hour access token and no refresh
+ * token, by design. Nothing used to ask for a new one at startup, so reopening
+ * the app left it silently unsynced until you went to Settings and pressed a
+ * button that opened a Google dialog. That reads as "it is asking me to sign in
+ * again", and it is why the app did not feel like Docs.
+ *
+ * requestAccessToken({ prompt: '' }) returns a token with NO UI when the user
+ * still has a live Google session and has already granted these scopes — which
+ * is the normal case. When they do not, GIS calls error_callback instead of
+ * showing anything, so this can never surprise anyone with a popup.
+ *
+ * Resolves to a token, or null. It never rejects, because a failed silent renewal
+ * is not an error — it just means we sync on the next explicit gesture.
+ */
+export function silentToken({ timeoutMs = 8000 } = {}) {
+  if (hasFreshToken()) return Promise.resolve(accessToken);
+  if (!tokenClient || !hasSignedInBefore()) return Promise.resolve(null);
+
+  return new Promise(resolve => {
+    let settled = false;
+    const done = v => { if (!settled) { settled = true; clearTimeout(timer); resolve(v); } };
+    const timer = setTimeout(() => done(null), timeoutMs);
+
+    tokenClient.callback = resp => {
+      if (resp.error) return done(null);
+      accessToken = resp.access_token;
+      expiresAt = Date.now() + Number(resp.expires_in || 3600) * 1000;
+      done(accessToken);
+    };
+    tokenClient.error_callback = () => done(null);
+
+    try { tokenClient.requestAccessToken({ prompt: '' }); }
+    catch { done(null); }
+  });
+}
+
 export function acquireToken() {
   if (hasFreshToken()) return Promise.resolve(accessToken);
   if (!tokenClient) return Promise.reject(new Error('auth_unavailable'));

@@ -1,0 +1,10 @@
+<!doctype html><meta charset=utf-8><script>
+localStorage.setItem('preptrack.identity', JSON.stringify({email:'a@b.c',name:'A',signedInAt:new Date().toISOString()}));
+location.replace('./#/today');
+</script>
+<script type="module">
+  window.addEventListener('load', () => setTimeout(async () => {
+    const { openMasterySheet } = await import('./js/components/masterySheet.js');
+    await openMasterySheet('ga', 'ga-rbi', 'RBI — structure & functions');
+  }, 1200));
+</script>
